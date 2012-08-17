@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# The HTML output is stored in a temporary file
+tmpfile="$(mktemp)"
+
+# Process each file from the command line
+while [ "$#" -gt 0 ]; do
+  # Use vim-fu to colorize the file
+  vim -X -E -n -c "TOhtml" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
+
+  # Use elinks to render the colored HTML into the console
+  elinks -dump -dump-color-mode 4 -dump-width "$(tput cols)" "$tmpfile" | sed -e 's/\s\+$//'
+
+  shift
+done
+
+# Clean up
+rm "$tmpfile"
