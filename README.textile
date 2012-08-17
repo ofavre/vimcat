@@ -1,0 +1,28 @@
+h1. vimcat
+
+A supercat with Vim powers!
+
+h2. How does it work?
+
+Uses a headless Vim with the @:TOhtml@ command from the @2html.vim@ plugin, to create an HTML colorized output.
+
+Then uses @elinks@ to dump the colorized output to the console.
+
+h2. Performance
+
+@:TOhtml@ does not offer good performance as it iterates over each and every character of the file,
+finds any change in coloring, and produces the corresponding HTML tags if any change is detected.
+
+@elinks@ fills the lines to full with with space characters.
+In an attempt to reduce the load of the terminal, those trailing spaces are stripped by @sed@.
+
+h2. TODO
+
+* More control over @2html.vim@ options
+* More control over @elinks@ dump
+* A usage help
+* Debian packaging, with @--noplugin@ and embedded @2html.vim@ script
+
+If performance requires:
+* Rewrite a native vim syntax file handler,
+* that outputs terminal color codes directly.
