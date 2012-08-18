@@ -1,11 +1,175 @@
 #!/bin/bash
-# http://www.test.com/
 
-# The HTML output is stored in a temporary file
-tmpfile="$(mktemp)"
+default_number_lines=0
+default_colors=auto
+auto_colors="$(tput colors)"
 
-# Process each file from the command line
-while [ "$#" -gt 0 ]; do
+print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [options] [--] [file] ...
+
+Outputs syntax highlighted files.
+Uses Vim for highlighting and elinks for rendering.
+
+Files and options can be mixed.
+If a filename can be mistaken for an option, use the \`-f' option, or place it
+after \`--'.
+
+Options:
+  -h, --help
+    Print this help message.
+  --
+    Separates arguments from filenames.
+    Arguments seen after this marker are treated as files.
+    This permits to process filenames that would otherwise been taken for
+    arguments.
+  -n, --line-number, --nl
+    Activates line numbering.
+  +n, --no-line-number, --no-nl
+    Deactivates line numbering.
+  -n{0,1}, --nl={0,1}, --line-number={0,1}
+    Activates or deactivates line numbering.
+    An empty value restores the default value, except for \`-n'.
+  -c{value}, --colors={value}
+    Sets the number of values available for highlighting.
+    Value can be either auto, (empty), -1, 0, 1, 2, 8, 16, 88, 256 or true.
+    -1 or '' (empty) restores default values.
+    0, 1 and 2 only affect a bit Vim's output and it basically removes colors.
+    auto uses \`tput colors\` to infer the right value.
+    true uses 256 colors for Vim, and true color mode for elinks.
+  +c, --no-colors
+    Alias for \`--colors=0'.
+  --vim-colors={value}
+    Advanced. Sets Vim's \`t_Co' option.
+    An empty value resets its default value.
+    The possible values are: 0, 1, 2, 8, 16, 88 and 256.
+    0 and 1 seem do be identical, they use underline and bold white.
+    2 shows a very rare usage of blue (in error messages), and syntax highlight
+    use bold gray too.
+  --dump-colors={value}
+    Advanced. Sets elinks's \`-dump-color-mode' option.
+    An empty value makes the argument to be skipped.
+    Here is the meaning of the possible values:
+      -1  standard
+       0  monochrome
+       1  16 colors
+       2  88 colors
+       3  256 colors
+       4  true colors
+
+Default values:
+  line numbering: "$default_number_lines"
+  colors:         "$default_colors"
+                  Note, "auto" would resolve to "$auto_colors".
+Advanced default values:
+  vim colors:     "$default_vim_colors"
+  dump colors:    "$default_dump_colors"
+
+Remarks:
+  Even if "auto" (or \`tput colors\`) resolve to 8, this does not necessarily
+  imply that you cannot use more colors.
+  For eg. using Konsole, tput reports 8 colors, which is the value Vim uses,
+  however elinks will not output the colors you would see within Vim, you
+  should then give a try to the option \`--dump-colors=3' alone (ie. without
+  modifying \`--vim-colors').
+EOF
+}
+
+init_tempfile() {
+  # Do once
+  # The HTML output is stored in a temporary file
+  [ -z "$tmpfile" ] && tmpfile="$(mktemp)"
+}
+
+teardown() {
+  if [ -n "$tmpfile" ]; then
+    rm "$tmpfile"
+    tmpfile=""
+  fi
+}
+
+set_opt_number_lines() {
+  case "$1" in
+    1)
+      nl=1
+      ;;
+    0)
+      nl=0
+      ;;
+    *)
+      nl=""
+      ;;
+  esac
+
+  opt_number_lines=()
+  if [ "$nl" == "" ]; then
+    opt_number_lines=("-c" "let g:html_number_lines=0")
+  else
+    opt_number_lines=("-c" "let g:html_number_lines=$nl")
+  fi
+}
+set_opt_number_lines "$default_number_lines"
+
+set_opt_vim_colors() {
+  opt_colors_vim=()
+  if [ -z "$1" ]; then
+    opt_colors_vim=("-c" "set t_Co&")
+  else
+    opt_colors_vim=("-c" "set t_Co=$1")
+  fi
+}
+
+set_opt_dump_colors() {
+  opt_colors_elinks=()
+  [ -n "$1" ] && opt_colors_elinks=("-dump-color-mode" "$1")
+}
+
+set_opt_colors() {
+  if [ "$1" == "auto" ]; then
+    set_opt_colors "$auto_colors"
+    return
+  elif [ "$1" == "true" ]; then
+    default_vim_colors=256
+    default_dump_colors=4
+  elif [ "$1" -le 0 ]; then
+    default_vim_colors=0
+    default_dump_colors=0
+  elif [ "$1" -lt 8 ]; then
+    default_vim_colors=2
+    default_dump_colors=0
+  elif [ "$1" -lt 16 ]; then
+    default_vim_colors=8
+    default_dump_colors=1
+  elif [ "$1" -lt 88 ]; then
+    default_vim_colors=16
+    default_dump_colors=1
+  elif [ "$1" -lt 256 ]; then
+    default_vim_colors=88
+    default_dump_colors=2
+  elif [ "$1" -eq 256 ]; then
+    default_vim_colors=256
+    default_dump_colors=3
+  elif [ "$1" -gt 256 ]; then
+    default_vim_colors=256
+    default_dump_colors=4
+  else
+    default_vim_colors=""
+    default_dump_colors="2"
+  fi
+
+  set_opt_vim_colors "$default_vim_colors"
+  set_opt_dump_colors "$default_dump_colors"
+}
+set_opt_colors "$default_colors"
+# Note: The previous call sets the values for $default_vim_colors and
+#       $default_dump_colors, which are later used by print_usage().
+
+process_file() {
+  if ! [ -r "$1" ]; then
+    echo "Cannot read file \"$1\"!" >&2
+    return 1
+  fi
+  init_tempfile
   # Use vim-fu to colorize the file:
   # * -X: Do not connect to the X server.
   #       Speeds up launch, disables terminal tab name change.
@@ -31,7 +195,7 @@ while [ "$#" -gt 0 ]; do
   #       The tempfile we are writing to doesn't care about recovery too, so
   #       we can disable swapfiles completely.
   # * -c cmd:
-  #       Executes the commands as if written by the user.
+  #       Executes the command as if written by the user.
   #       Note: Vim permits only 10 of such arguments!
   # * --: Cleanly separate the arguments from the files to be processed.
   #       We can't make any assumption on the file names. They can even start
@@ -40,7 +204,7 @@ while [ "$#" -gt 0 ]; do
   #       Along with the Ex mode, this prevents the screen from being cleared
   #       and restored a short while after. None of Vim usage will be visible
   #       to the user, which is good.
-  vim -X -S thisvimrc -E -n -c "TOhtml" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
+  vim -X -S thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors_vim[@]}" -c "TOhtml" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
 
   # Use elinks to render the colored HTML into the console
   # * -force-html: Interprets unrecognized files as HTML.
@@ -75,10 +239,62 @@ while [ "$#" -gt 0 ]; do
   #       Alias for document.dump.references.
   # Use sed to suppress the useless line ending spaces, this can speedup
   # display a bit.
-  elinks -force-html -dump -dump-color-mode 3 -dump-width "$(tput cols)" -eval 'set document.browse.margin_width = 0' -no-numbering 1 -no-references 1 "$tmpfile" | sed -r -e 's/\s+$//'
+  elinks -force-html -dump "${opt_colors_elinks[@]}" -dump-width "$(tput cols)" -eval 'set document.browse.margin_width = 0' -no-numbering 1 -no-references 1 "$tmpfile" | sed -r -e 's/\s+$//'
+}
+
+#
+# Entry point
+#
+
+# Process each file from the command line
+while [ "$#" -gt 0 ]; do
+  if [ "$no_more_args" == "1" ]; then
+    process_file "$1"
+  else
+    case "$1" in
+      -h|--help)
+        print_usage
+        exit 0
+        ;;
+      --)
+        no_more_args=1
+        ;;
+      -n|--line-number|--nl)
+        set_opt_number_lines 1
+        ;;
+      +n|--no-line-number|--no-nl)
+        set_opt_number_lines 0
+        ;;
+      -n*)
+        set_opt_number_lines "${1#-n}"
+        ;;
+      --nl=*|--line-number=*)
+        set_opt_number_lines "${1#*=}"
+        ;;
+      -c)
+        set_opt_colors "$auto_colors"
+        ;;
+      -c*)
+        set_opt_colors "${1#-c}"
+        ;;
+      --colors=*)
+        set_opt_colors "${1#*=}"
+        ;;
+      +c|--no-colors)
+        set_opt_colors 0
+        ;;
+      --vim-colors=*)
+        set_opt_vim_colors "${1#*=}"
+        ;;
+      --dump-colors=*)
+        set_opt_dump_colors "${1#*=}"
+        ;;
+      *)
+        process_file "$1"
+    esac
+  fi
 
   shift
 done
 
-# Clean up
-rm "$tmpfile"
+teardown
