@@ -1,15 +1,81 @@
 #!/bin/bash
+# http://www.test.com/
 
 # The HTML output is stored in a temporary file
 tmpfile="$(mktemp)"
 
 # Process each file from the command line
 while [ "$#" -gt 0 ]; do
-  # Use vim-fu to colorize the file
-  vim -X -E -n -c "TOhtml" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
+  # Use vim-fu to colorize the file:
+  # * -X: Do not connect to the X server.
+  #       Speeds up launch, disables terminal tab name change.
+  #       -> All good, we don't need that stuff!
+  # * -S sourced-file:
+  #       A script file to be sourced.
+  #       This is different from -u vimrc, in that we do not replace the
+  #       default vimrcs.
+  #       Note: It is very important to keep this option *before* -E,
+  #             as -s after it doesn't have the same meaning and doesn't take
+  #             any argument!
+  # * -E: Starts Vim in Ex mode. It will await command, but won't display the
+  #       files on screen like the visual mode does.
+  #       This permits to bypass the "Vim: Warning: Output is not to a
+  #       terminal" message and its associated pause.
+  # * -n: Do not use swapfiles.
+  #       We won't modify the loaded file, so that doesn't hurt.
+  #       Moreover, it won't display a message to the user in case we are
+  #       processing a file already opened in another vim.
+  #       A -R trick would display a "W10: Warning: Changing a readonly file"
+  #       warning, and add a little 1s pause. Adding -c "set noreadonly", helps
+  #       a bit in such case.
+  #       The tempfile we are writing to doesn't care about recovery too, so
+  #       we can disable swapfiles completely.
+  # * -c cmd:
+  #       Executes the commands as if written by the user.
+  #       Note: Vim permits only 10 of such arguments!
+  # * --: Cleanly separate the arguments from the files to be processed.
+  #       We can't make any assumption on the file names. They can even start
+  #       with a dash, in which case they must not be mistaken for arguments.
+  # * >/dev/null:
+  #       Along with the Ex mode, this prevents the screen from being cleared
+  #       and restored a short while after. None of Vim usage will be visible
+  #       to the user, which is good.
+  vim -X -S thisvimrc -E -n -c "TOhtml" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
 
   # Use elinks to render the colored HTML into the console
-  elinks -dump -dump-color-mode 4 -dump-width "$(tput cols)" "$tmpfile" | sed -e 's/\s\+$//'
+  # * -force-html: Interprets unrecognized files as HTML.
+  #                Normally this is not required with -dump.
+  # * -dump:
+  #       Outputs the web page in the console, instead of using the interactive
+  #       mode.
+  # * -dump-color-mode -1-4:
+  #       Use colors with the dump mode.
+  #        -1  standard
+  #         0  monochrome
+  #         1  16 colors
+  #         2  88 colors
+  #         3  256 colors
+  #         4  true colors
+  # * -dump-width width:
+  #       Console width.
+  #       Alias for the document.dump.color_mode option.
+  # * -eval 'set option = value':
+  #       Sets any option.
+  #       document.browse.margin_width has no parameter alias.
+  #       This option is used to suppress the left margin, which is not as
+  #       useful in a dump as in an interactive mode.
+  # * -no-numbering 0|1:
+  #       Suppresses the numbering before each link.
+  #       Note that each URL is transformed into a link by the :TOhtml command.
+  #       Alias for document.dump.numbering.
+  # * -no-references 0|1:
+  #       Suppresses the foot reference for each link.
+  #       This is the only way to get the link URL, as only the link text is
+  #       displayed. But we don't care as only URLs are linkified.
+  #       Alias for document.dump.references.
+  # Use sed to suppress the useless line ending spaces, this can speedup
+  # display a bit.
+  elinks -force-html -dump -dump-color-mode 3 -dump-width "$(tput cols)" -eval 'set document.browse.margin_width = 0' -no-numbering 1 -no-references 1 "$tmpfile" | sed -r -e 's/\s+$//'
 
   shift
 done

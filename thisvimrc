@@ -1,0 +1,16 @@
+" Prefer our embedded version of 2html, to any potentially existing one.
+set runtimepath^=./runtime/
+"set t_Co=256
+
+let g:html_use_css=1
+let g:html_use_xhtml=1
+let g:html_no_progress=1
+
+"let g:html_number_lines=0
+let g:html_ignore_folding=1
+let g:html_dynamic_folds=0
+
+let g:html_no_pre=1
+let g:html_expand_tabs=1
+
+set foldmethod=indent
