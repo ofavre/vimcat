@@ -9,7 +9,7 @@ let g:html_use_css=1
 let g:html_use_xhtml=1
 let g:html_no_progress=1
 
-let g:html_ignore_folding=1
+let g:html_ignore_folding=0
 let g:html_dynamic_folds=0
 
 let g:html_no_pre=1

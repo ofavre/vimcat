@@ -1,8 +1,15 @@
 #!/bin/bash
 
 default_number_lines=0
-default_colors=auto
+default_colors="auto"
 auto_colors="$(tput colors)"
+default_foldmethod=""
+default_foldlevel=""
+default_foldminlines=""
+default_tabstop=""
+default_shiftwidth=""
+default_softtabstop=""
+default_foldmarker=""
 
 print_usage() {
   cat <<EOF
@@ -56,11 +63,61 @@ Options:
        2  88 colors
        3  256 colors
        4  true colors
+  --set-{option}={value}
+  --set-no{option}
+  --set-{option}!
+  --set-{option}&, --unset-{option}
+  --set-{option}+={value}
+  --set-{option}^={value}
+  --set-{option}-={value}
+    Set Vim's given option to the given value.
+    In fact, everything after \`--set-' is left intact and given to Vim.
+    These options are backed by the \`--cmd' option.
+  --cmd={command}
+    Gives arbitrary commands to Vim.
+  --cmd-reset
+    Discard all previous commands.
+    Also affects \`--set' options.
+  --fdm={value}, --foldmethod={value}
+    Set Vim's \`foldmethod' option.
+    An empty value skips setting the option, "default" enforces the default.
+  --fdl={value}, --foldlevel={value}
+    Set Vim's \`foldlevel' option.
+    0 will fold to the topmost level, 1 to the second level, etc.
+    Use this option if you see no folds after using \`--foldmethod'.
+    An empty value skips setting the option, "default" enforces the default.
+  --fml={value}, --foldminlines={value}
+    Set Vim's \`foldminlines' option.
+    An empty value skips setting the option, "default" enforces the default.
+  --ts={value}, --tabstop={value}
+    Set Vim's \`tabstop' option.
+    An empty value skips setting the option, "default" enforces the default.
+    This helps with \`--foldmethod=indent'.
+  --sw={value}, --shiftwidth={value}
+    Set Vim's \`shiftwidth' option.
+    An empty value skips setting the option, "default" enforces the default.
+    This helps with \`--foldmethod=indent'.
+  --sts={value}, --softtabstop={value}
+    Set Vim's \`softtabstop' option.
+    An empty value skips setting the option, "default" enforces the default.
+    This helps with \`--foldmethod=indent'.
+  --fmr={value}, --foldmarker={value}
+    Set Vim's \`foldmarker' option.
+    An empty value skips setting the option, "default" enforces the default.
+    Use with \`--foldmethod=marker'
 
-Default values:
+Default values: (default means reset to Vim's default)
   line numbering: "$default_number_lines"
   colors:         "$default_colors"
                   Note, "auto" would resolve to "$auto_colors".
+  foldmethod:     "$default_foldmethod"
+  foldlevel:      "$default_foldlevel"
+  foldminlines:   "$default_foldminlines"
+  tabstop:        "$default_tabstop"
+  shiftwidth:     "$default_shiftwidth"
+  softtabstop:    "$default_softtabstop"
+  foldmarker:     "$default_foldmarker"
+
 Advanced default values:
   vim colors:     "$default_vim_colors"
   dump colors:    "$default_dump_colors"
@@ -164,12 +221,136 @@ set_opt_colors "$default_colors"
 # Note: The previous call sets the values for $default_vim_colors and
 #       $default_dump_colors, which are later used by print_usage().
 
+set_opt_cmd() {
+  opt_cmd_internal="$opt_cmd_internal | $1"
+}
+set_opt_cmd_reset() {
+  opt_cmd_internal=""
+}
+set_opt_cmd_reset
+prepare_opt_cmd() {
+  if [ "${#opt_cmd_internal[@]}" -eq 0 ]; then
+    opt_cmd=()
+  else
+    opt_cmd=("-c" "${opt_cmd_internal# | }")
+  fi
+}
+
+set_opt_folding() {
+  local cmd=""
+
+  if [ -n "$default_foldmethod" ]; then
+    if [ "$default_foldmethod" == "default" ]; then
+      cmd="$cmd foldmethod&"
+    else
+      cmd="$cmd foldmethod=$default_foldmethod"
+    fi
+  fi
+
+  if [ -n "$default_foldlevel" ]; then
+    if [ "$default_foldlevel" == "default" ]; then
+      cmd="$cmd foldlevel&"
+    else
+      cmd="$cmd foldlevel=$default_foldlevel"
+    fi
+  fi
+
+  if [ -n "$default_foldminlines" ]; then
+    if [ "$default_foldminlines" == "default" ]; then
+      cmd="$cmd foldminlines&"
+    else
+      cmd="$cmd foldminlines=$default_foldminlines"
+    fi
+  fi
+
+  if [ -n "$default_tabstop" ]; then
+    if [ "$default_tabstop" == "default" ]; then
+      cmd="$cmd tabstop&"
+    else
+      cmd="$cmd tabstop=$default_tabstop"
+    fi
+  fi
+
+  if [ -n "$default_shiftwidth" ]; then
+    if [ "$default_shiftwidth" == "default" ]; then
+      cmd="$cmd shiftwidth&"
+    else
+      cmd="$cmd shiftwidth=$default_shiftwidth"
+    fi
+  fi
+
+  if [ -n "$default_softtabstop" ]; then
+    if [ "$default_softtabstop" == "default" ]; then
+      cmd="$cmd softtabstop&"
+    else
+      cmd="$cmd softtabstop=$default_softtabstop"
+    fi
+  fi
+
+  if [ -n "$default_foldmarker" ]; then
+    if [ "$default_foldmarker" == "default" ]; then
+      cmd="$cmd foldmarker&"
+    else
+      cmd="$cmd foldmarker=$default_foldmarker"
+    fi
+  fi
+
+  cmd="set$cmd"
+  opt_folding=()
+  [ -n "$cmd" ] && opt_folding=("-c" "$cmd")
+}
+
+set_opt_foldmethod() {
+  default_foldmethod="$1"
+  set_opt_folding
+}
+set_opt_foldmethod "$default_foldmethod"
+
+set_opt_foldlevel() {
+  default_foldlevel="$1"
+  set_opt_folding
+}
+set_opt_foldlevel "$default_foldlevel"
+
+set_opt_foldminlines() {
+  default_foldminlines="$1"
+  set_opt_folding
+}
+set_opt_foldminlines "$default_foldminlines"
+
+set_opt_tabstop() {
+  default_tabstop="$1"
+  set_opt_folding
+}
+set_opt_tabstop "$default_tabstop"
+
+set_opt_shiftwidth() {
+  default_shiftwidth="$1"
+  set_opt_folding
+}
+set_opt_shiftwidth "$default_shiftwidth"
+
+set_opt_softtabstop() {
+  default_softtabstop="$1"
+  set_opt_folding
+}
+set_opt_softtabstop "$default_softtabstop"
+
+set_opt_foldmarker() {
+  default_foldmarker="$1"
+  set_opt_folding
+}
+set_opt_foldmarker "$default_foldmarker"
+
 process_file() {
   if ! [ -r "$1" ]; then
     echo "Cannot read file \"$1\"!" >&2
     return 1
   fi
+
   init_tempfile
+  prepare_opt_cmd
+
   # Use vim-fu to colorize the file:
   # * -X: Do not connect to the X server.
   #       Speeds up launch, disables terminal tab name change.
@@ -204,7 +385,7 @@ process_file() {
   #       Along with the Ex mode, this prevents the screen from being cleared
   #       and restored a short while after. None of Vim usage will be visible
   #       to the user, which is good.
-  vim -X -S thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors_vim[@]}" -c "TOhtml" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
+  vim -X -S thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors_vim[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOhtml" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
 
   # Use elinks to render the colored HTML into the console
   # * -force-html: Interprets unrecognized files as HTML.
@@ -288,6 +469,36 @@ while [ "$#" -gt 0 ]; do
         ;;
       --dump-colors=*)
         set_opt_dump_colors "${1#*=}"
+        ;;
+      --set-*)
+        set_opt_cmd "set ${1#--set-}"
+        ;;
+      --cmd=*)
+        set_opt_cmd "${1#*=}"
+        ;;
+      --cmd-reset)
+        set_opt_cmd_reset
+        ;;
+      --fdm=*|--foldmethod=*)
+        set_opt_foldmethod "${1#*=}"
+        ;;
+      --fdl=*|--foldlevel=*)
+        set_opt_foldlevel "${1#*=}"
+        ;;
+      --fml=*|--foldminlines=*)
+        set_opt_foldminlines "${1#*=}"
+        ;;
+      --ts=*|--tabstop=*)
+        set_opt_tabstop "${1#*=}"
+        ;;
+      --sw=*|--shiftwidth=*)
+        set_opt_shiftwidth "${1#*=}"
+        ;;
+      --sts=*|--softtabstop=*)
+        set_opt_softtabstop "${1#*=}"
+        ;;
+      --fmr=*|--foldmarker=*)
+        set_opt_foldmarker "${1#*=}"
         ;;
       *)
         process_file "$1"
