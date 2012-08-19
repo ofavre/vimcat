@@ -8,6 +8,13 @@ Uses a headless Vim with the @:TOhtml@ command from the @2html.vim@ plugin, to c
 
 Then uses @elinks@ to dump the colorized output to the console.
 
+h2. Options
+
+This program has many options, but you would normally use a few.
+A few options permits you to write arbitrary Vim commands.
+
+Once you've found the right colors options to fit your needs (get the exact colors you have in Vim), you would create an alias.
+
 h2. Performance
 
 @:TOhtml@ does not offer good performance as it iterates over each and every character of the file,
@@ -18,9 +25,6 @@ In an attempt to reduce the load of the terminal, those trailing spaces are stri
 
 h2. TODO
 
-* More control over @2html.vim@ options
-* More control over @elinks@ dump
-* A usage help
 * Debian packaging, with @--noplugin@ and embedded @2html.vim@ script
 
 If performance requires:
