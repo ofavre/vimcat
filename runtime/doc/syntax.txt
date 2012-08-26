@@ -17,7 +17,7 @@ terminals have very limited highlighting possibilities, it works best in the
 GUI version, gvim.
 
 Note: This is a stripped version of the regular |syntax.txt| file, it only
-contains the documentation of the *2html.vim* plugin.
+contains the documentation of the *2ansicolorcodes.vim* plugin.
 
 4.  Syntax file remarks		|:syn-file-remarks|
 
@@ -27,21 +27,21 @@ disabled at compile time.
 ==============================================================================
 4. Syntax file remarks					*:syn-file-remarks*
 
-2HTML						*2html.vim* *convert-to-HTML*
+2HTML						*2ansicolorcodes.vim* *convert-to-HTML*
 
 This is not a syntax file itself, but a script that converts the current
 window into HTML.  Vim opens a new window in which it builds the HTML file.
 
-You are not supposed to set the 'filetype' or 'syntax' option to "2html"!
+You are not supposed to set the 'filetype' or 'syntax' option to "2ansicolorcodes"!
 Source the script to convert the current file: >
 
-	:runtime! syntax/2html.vim
+	:runtime! syntax/2ansicolorcodes.vim
 <
-							*:TOhtml*
-Or use the ":TOhtml" user command.  It is defined in a standard plugin.
-":TOhtml" also works with a range and in a Visual area: >
+							*:TOansicolorcodes*
+Or use the ":TOansicolorcodes" user command.  It is defined in a standard plugin.
+":TOansicolorcodes" also works with a range and in a Visual area: >
 
-	:10,40TOhtml
+	:10,40TOansicolorcodes
 
 Warning: This can be slow! The script must process every character of every
 line. Because it can take a long time, by default a progress bar is displayed
@@ -49,52 +49,52 @@ in the statusline for each major step in the conversion process. If you don't
 like seeing this progress bar, you can disable it and get a very minor speed
 improvement with: >
 
-	let g:html_no_progress = 1
+	let g:ansicolorcodes_no_progress = 1
 
-":TOhtml" has another special feature: if the window is in diff mode, it will
+":TOansicolorcodes" has another special feature: if the window is in diff mode, it will
 generate HTML that shows all the related windows.  This can be disabled by
-setting the g:html_diff_one_file variable: >
+setting the g:ansicolorcodes_diff_one_file variable: >
 
-	let g:html_diff_one_file = 1
+	let g:ansicolorcodes_diff_one_file = 1
 
 After you save the resulting file, you can view it with any browser.  The
 colors should be exactly the same as you see them in Vim.
 
-To restrict the conversion to a range of lines, use a range with the |:TOhtml|
-command, or set "g:html_start_line" and "g:html_end_line" to the first and
+To restrict the conversion to a range of lines, use a range with the |:TOansicolorcodes|
+command, or set "g:ansicolorcodes_start_line" and "g:ansicolorcodes_end_line" to the first and
 last line to be converted.  Example, using the last set Visual area: >
 
-	:let g:html_start_line = line("'<")
-	:let g:html_end_line = line("'>")
+	:let g:ansicolorcodes_start_line = line("'<")
+	:let g:ansicolorcodes_end_line = line("'>")
 
 The lines are numbered according to 'number' option and the Number
 highlighting.  You can force lines to be numbered in the HTML output by
 setting "html_number_lines" to non-zero value: >
-   :let g:html_number_lines = 1
+   :let g:ansicolorcodes_number_lines = 1
 Force to omit the line numbers by using a zero value: >
-   :let g:html_number_lines = 0
+   :let g:ansicolorcodes_number_lines = 0
 Go back to the default to use 'number' by deleting the variable: >
-   :unlet g:html_number_lines
+   :unlet g:ansicolorcodes_number_lines
 
 By default, valid HTML 4.01 using cascading style sheets (CSS1) is generated.
 If you need to generate markup for really old browsers or some other user
 agent that lacks basic CSS support, use: >
-   :let g:html_use_css = 0
+   :let g:ansicolorcodes_use_css = 0
 
 Concealed text is removed from the HTML and replaced with the appropriate
 character from |:syn-cchar| or 'listchars' depending on the current value of
 'conceallevel'. If you always want to display all text in your document,
-either set 'conceallevel' to zero before invoking 2html, or use: >
-   :let g:html_ignore_conceal = 1
+either set 'conceallevel' to zero before invoking 2ansicolorcodes, or use: >
+   :let g:ansicolorcodes_ignore_conceal = 1
 
 Similarly, closed folds are put in the HTML as they are displayed.  If you
-don't want this, use the |zR| command before invoking 2html, or use: >
-   :let g:html_ignore_folding = 1
+don't want this, use the |zR| command before invoking 2ansicolorcodes, or use: >
+   :let g:ansicolorcodes_ignore_folding = 1
 
 You may want to generate HTML that includes all the data within the folds, and
 allow the user to view the folded data similar to how they would in Vim. To
 generate this dynamic fold information, use: >
-   :let g:html_dynamic_folds = 1
+   :let g:ansicolorcodes_dynamic_folds = 1
 
 Using html_dynamic_folds will imply html_use_css, because it would be far too
 difficult to do it for old browsers. However, html_ignore_folding overrides
@@ -105,7 +105,7 @@ similar to Vim's foldcolumn, that will use javascript to open and close the
 folds in the HTML document. The width of this foldcolumn starts at the current
 setting of |'foldcolumn'| but grows to fit the greatest foldlevel in your
 document. If you do not want to show a foldcolumn at all, use: >
-   :let g:html_no_foldcolumn = 1
+   :let g:ansicolorcodes_no_foldcolumn = 1
 
 Using this option, there will be no foldcolumn available to open the folds in
 the HTML. For this reason, another option is provided: html_hover_unfold.
@@ -116,7 +116,7 @@ included to fall back to the normal CSS1 code so that the folds show up
 correctly for this browser, but they will not be openable without a
 foldcolumn. Note that using html_hover_unfold will allow modern browsers with
 disabled javascript to view closed folds. To use this option, use: >
-   :let g:html_hover_unfold = 1
+   :let g:ansicolorcodes_hover_unfold = 1
 
 Setting html_no_foldcolumn with html_dynamic_folds will automatically set
 html_hover_unfold, because otherwise the folds wouldn't be dynamic.
@@ -124,16 +124,16 @@ html_hover_unfold, because otherwise the folds wouldn't be dynamic.
 By default "<pre>" and "</pre>" are used around the text. When 'wrap' is set
 in the window being converted, the CSS 2.0 "white-space:pre-wrap" value is
 used to wrap the text. You can explicitly enable the wrapping with: >
-   :let g:html_pre_wrap = 1
+   :let g:ansicolorcodes_pre_wrap = 1
 or disable with >
-   :let g:html_pre_wrap = 0
+   :let g:ansicolorcodes_pre_wrap = 0
 This generates HTML that looks very close to the Vim window, but unfortunately
 there can be minor differences such as the lack of a 'showbreak' option in in
 the HTML, or where line breaks can occur.
 
 Another way to obtain text wrapping in the HTML, at the risk of making some
 things look even more different, is to use: >
-   :let g:html_no_pre = 1
+   :let g:ansicolorcodes_no_pre = 1
 This will use <br> at the end of each line and use "&nbsp;" for repeated
 spaces. Doing it this way is more compatible with old browsers, but modern
 browsers support the "white-space" method.
@@ -150,59 +150,59 @@ the line numbers are included in the HTML output (see options above). When any
 of these conditions are not met, any <Tab> characters in the text are expanded
 to the appropriate number of spaces in the HTML output.
 
-When "<pre>" is included, you can force |:TOhtml| to keep the tabs even if the
+When "<pre>" is included, you can force |:TOansicolorcodes| to keep the tabs even if the
 other conditions are not met with: >
-   :let g:html_expand_tabs = 0
+   :let g:ansicolorcodes_expand_tabs = 0
 Note that this can easily break text alignment and indentation in the HTML.
 
 Force tabs to be expanded even when they would be kept using: >
-   :let g:html_expand_tabs = 1
+   :let g:ansicolorcodes_expand_tabs = 1
 
-For diff mode on a single file (with g:html_diff_one_file) a sequence of more
+For diff mode on a single file (with g:ansicolorcodes_diff_one_file) a sequence of more
 than 3 filler lines is displayed as three lines with the middle line
 mentioning the total number of inserted lines.  If you prefer to see all the
 inserted lines as with the side-by-side diff, use: >
-    :let g:html_whole_filler = 1
+    :let g:ansicolorcodes_whole_filler = 1
 And to go back to displaying up to three lines again: >
-    :unlet g:html_whole_filler
+    :unlet g:ansicolorcodes_whole_filler
 
-For most buffers, TOhtml uses the current value of 'fileencoding' if set, or
+For most buffers, TOansicolorcodes uses the current value of 'fileencoding' if set, or
 'encoding' if not, to determine the charset and 'fileencoding' of the HTML
 file. 'encoding' is always used for certain 'buftype' values. In general, this
 works for the encodings mentioned specifically by name in |encoding-names|,
-but TOhtml will only automatically use those encodings which are widely
+but TOansicolorcodes will only automatically use those encodings which are widely
 supported. However, you can override this to support specific encodings that
 may not be automatically detected by default.
 
-To overrule all automatic charset detection, set g:html_use_encoding to the
-name of the charset to be used. TOhtml will try to determine the appropriate
+To overrule all automatic charset detection, set g:ansicolorcodes_use_encoding to the
+name of the charset to be used. TOansicolorcodes will try to determine the appropriate
 'fileencoding' setting from the charset, but you may need to set it manually
-if TOhtml cannot determine the encoding. It is recommended to set this
+if TOansicolorcodes cannot determine the encoding. It is recommended to set this
 variable to something widely supported, like UTF-8, for anything you will be
 hosting on a webserver: >
-   :let g:html_use_encoding = "UTF-8"
+   :let g:ansicolorcodes_use_encoding = "UTF-8"
 You can also use this option to omit the line that specifies the charset
-entirely, by setting g:html_use_encoding to an empty string: >
-   :let g:html_use_encoding = ""
-To go back to the automatic mechanism, delete the g:html_use_encoding
+entirely, by setting g:ansicolorcodes_use_encoding to an empty string: >
+   :let g:ansicolorcodes_use_encoding = ""
+To go back to the automatic mechanism, delete the g:ansicolorcodes_use_encoding
 variable: >
-   :unlet g:html_use_encoding
+   :unlet g:ansicolorcodes_use_encoding
 
-If you specify a charset with g:html_use_encoding for which TOhtml cannot
+If you specify a charset with g:ansicolorcodes_use_encoding for which TOansicolorcodes cannot
 automatically detect the corresponding 'fileencoding' setting, you can use
-g:html_encoding_override to allow TOhtml to detect the correct encoding.
+g:ansicolorcodes_encoding_override to allow TOansicolorcodes to detect the correct encoding.
 This is a dictionary of charset-encoding pairs that will replace existing
-pairs automatically detected by TOhtml, or supplement with new pairs. For
-example, to allow TOhtml to detect the HTML charset "windows-1252" properly as
+pairs automatically detected by TOansicolorcodes, or supplement with new pairs. For
+example, to allow TOansicolorcodes to detect the HTML charset "windows-1252" properly as
 the encoding "8bit-cp1252", use: >
-   :let g:html_encoding_override = {'windows-1252': '8bit-cp1252'}
+   :let g:ansicolorcodes_encoding_override = {'windows-1252': '8bit-cp1252'}
 <
-The g:html_charset_override is similar, it allows TOhtml to detect the HTML
+The g:ansicolorcodes_charset_override is similar, it allows TOansicolorcodes to detect the HTML
 charset for any 'fileencoding' or 'encoding' which is not detected
 automatically. You can also use it to override specific existing
-encoding-charset pairs. For example, TOhtml will by default use UTF-8 for all
+encoding-charset pairs. For example, TOansicolorcodes will by default use UTF-8 for all
 Unicode/UCS encodings. To use UTF-16 and UTF-32 instead, use: >
-   :let g:html_charset_override = {'ucs-4': 'UTF-32', 'utf-16': 'UTF-16'}
+   :let g:ansicolorcodes_charset_override = {'ucs-4': 'UTF-32', 'utf-16': 'UTF-16'}
 
 Note that documents encoded in either UTF-32 or UTF-16 have known
 compatibility problems with at least one major browser.
@@ -210,7 +210,7 @@ compatibility problems with at least one major browser.
 					    *convert-to-XML* *convert-to-XHTML*
 If you do not like plain HTML, an alternative is to have the script generate
 XHTML (XML compliant HTML). To do this set the "html_use_xhtml" variable: >
-    :let g:html_use_xhtml = 1
+    :let g:ansicolorcodes_use_xhtml = 1
 
 Any of the on/off options listed above can be enabled or disabled by setting
 them explicitly to the desired value, or restored to their default by removing
@@ -219,13 +219,13 @@ the variable using |:unlet|.
 Remarks:
 - Some truly ancient browsers may not show the background colors.
 - From most browsers you can also print the file (in color)!
-- This version of TOhtml may work with older versions of Vim, but some
+- This version of TOansicolorcodes may work with older versions of Vim, but some
   features such as conceal support will not function, and the colors may be
   incorrect for an old Vim without GUI support compiled in.
 
 Here is an example how to run the script over all .c and .h files from a
 Unix shell: >
-   for f in *.[ch]; do gvim -f +"syn on" +"run! syntax/2html.vim" +"wq" +"q" $f; done
+   for f in *.[ch]; do gvim -f +"syn on" +"run! syntax/2ansicolorcodes.vim" +"wq" +"q" $f; done
 <
 
  vim:tw=78:sw=4:ts=8:ft=help:norl:

@@ -1,6 +1,6 @@
-" Prefer our embedded version of 2html, to any potentially existing one.
+" XXX Prefer our embedded version of 2html, to any potentially existing one.
 set runtimepath^=./runtime
-" Manually ask Vim to load our plugin(s)
+" Manually ask Vim to load our plugin(s) XXX
 source ./runtime/plugin/*.vim
 " Under debian, /etc/vim/vimrc sources debian.vim, which resets the runtimepath
 " option, preventing Vim from autoloading the plugins

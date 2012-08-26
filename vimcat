@@ -134,7 +134,7 @@ EOF
 
 init_tempfile() {
   # Do once
-  # The HTML output is stored in a temporary file
+  # The ansi color coded output is stored in a temporary file
   [ -z "$tmpfile" ] && tmpfile="$(mktemp)"
 }
 
@@ -160,9 +160,9 @@ set_opt_number_lines() {
 
   opt_number_lines=()
   if [ "$nl" == "" ]; then
-    opt_number_lines=("-c" "let g:html_number_lines=0")
+    opt_number_lines=("-c" "let g:ansicolorcodes_number_lines=0")
   else
-    opt_number_lines=("-c" "let g:html_number_lines=$nl")
+    opt_number_lines=("-c" "let g:ansicolorcodes_number_lines=$nl")
   fi
 }
 set_opt_number_lines "$default_number_lines"
@@ -385,42 +385,9 @@ process_file() {
   #       Along with the Ex mode, this prevents the screen from being cleared
   #       and restored a short while after. None of Vim usage will be visible
   #       to the user, which is good.
-  vim -X -S thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors_vim[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOhtml" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
+  vim -X -S /usr/share/vimcat/thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors_vim[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOansicolorcodes" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
 
-  # Use elinks to render the colored HTML into the console
-  # * -force-html: Interprets unrecognized files as HTML.
-  #                Normally this is not required with -dump.
-  # * -dump:
-  #       Outputs the web page in the console, instead of using the interactive
-  #       mode.
-  # * -dump-color-mode -1-4:
-  #       Use colors with the dump mode.
-  #        -1  standard
-  #         0  monochrome
-  #         1  16 colors
-  #         2  88 colors
-  #         3  256 colors
-  #         4  true colors
-  # * -dump-width width:
-  #       Console width.
-  #       Alias for the document.dump.color_mode option.
-  # * -eval 'set option = value':
-  #       Sets any option.
-  #       document.browse.margin_width has no parameter alias.
-  #       This option is used to suppress the left margin, which is not as
-  #       useful in a dump as in an interactive mode.
-  # * -no-numbering 0|1:
-  #       Suppresses the numbering before each link.
-  #       Note that each URL is transformed into a link by the :TOhtml command.
-  #       Alias for document.dump.numbering.
-  # * -no-references 0|1:
-  #       Suppresses the foot reference for each link.
-  #       This is the only way to get the link URL, as only the link text is
-  #       displayed. But we don't care as only URLs are linkified.
-  #       Alias for document.dump.references.
-  # Use sed to suppress the useless line ending spaces, this can speedup
-  # display a bit.
-  elinks -force-html -dump "${opt_colors_elinks[@]}" -dump-width "$(tput cols)" -eval 'set document.browse.margin_width = 0' -no-numbering 1 -no-references 1 "$tmpfile" | sed -r -e 's/\s+$//'
+  cat "$tmpfile"
 }
 
 #
