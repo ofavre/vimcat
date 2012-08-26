@@ -38,31 +38,16 @@ Options:
     Activates or deactivates line numbering.
     An empty value restores the default value, except for \`-n'.
   -c{value}, --colors={value}
-    Sets the number of values available for highlighting.
-    Value can be either auto, (empty), -1, 0, 1, 2, 8, 16, 88, 256 or true.
-    -1 or '' (empty) restores default values.
-    0, 1 and 2 only affect a bit Vim's output and it basically removes colors.
-    auto uses \`tput colors\` to infer the right value.
-    true uses 256 colors for Vim, and true color mode for elinks.
-  +c, --no-colors
-    Alias for \`--colors=0'.
-  --vim-colors={value}
-    Advanced. Sets Vim's \`t_Co' option.
-    An empty value resets its default value.
-    The possible values are: 0, 1, 2, 8, 16, 88 and 256.
+    Sets Vim's \`t_Co' option, the number of values available for highlighting.
+    Value can be either auto, (empty), 0, 1, 2, 8, 16, 88, 256 or true.
+    (empty) restores default values.
     0 and 1 seem do be identical, they use underline and bold white.
     2 shows a very rare usage of blue (in error messages), and syntax highlight
     use bold gray too.
-  --dump-colors={value}
-    Advanced. Sets elinks's \`-dump-color-mode' option.
-    An empty value makes the argument to be skipped.
-    Here is the meaning of the possible values:
-      -1  standard
-       0  monochrome
-       1  16 colors
-       2  88 colors
-       3  256 colors
-       4  true colors
+    auto uses \`tput colors\` to infer the right value.
+    true uses the 24 bits color codes available in certain terminals.
+  +c, --no-colors
+    Alias for \`--colors=0'.
   --set-{option}={value}
   --set-no{option}
   --set-{option}!
@@ -118,17 +103,11 @@ Default values: (default means reset to Vim's default)
   softtabstop:    "$default_softtabstop"
   foldmarker:     "$default_foldmarker"
 
-Advanced default values:
-  vim colors:     "$default_vim_colors"
-  dump colors:    "$default_dump_colors"
-
 Remarks:
   Even if "auto" (or \`tput colors\`) resolve to 8, this does not necessarily
   imply that you cannot use more colors.
   For eg. using Konsole, tput reports 8 colors, which is the value Vim uses,
-  however elinks will not output the colors you would see within Vim, you
-  should then give a try to the option \`--dump-colors=3' alone (ie. without
-  modifying \`--vim-colors').
+  but can handle 24 bits colors.
 EOF
 }
 
@@ -167,59 +146,33 @@ set_opt_number_lines() {
 }
 set_opt_number_lines "$default_number_lines"
 
-set_opt_vim_colors() {
-  opt_colors_vim=()
-  if [ -z "$1" ]; then
-    opt_colors_vim=("-c" "set t_Co&")
-  else
-    opt_colors_vim=("-c" "set t_Co=$1")
-  fi
-}
-
-set_opt_dump_colors() {
-  opt_colors_elinks=()
-  [ -n "$1" ] && opt_colors_elinks=("-dump-color-mode" "$1")
-}
-
 set_opt_colors() {
-  if [ "$1" == "auto" ]; then
+  opt_colors=()
+  if [ -z "$1" ]; then
+    opt_colors=("-c" "set t_Co&")
+  elif [ "$1" == "auto" ]; then
     set_opt_colors "$auto_colors"
-    return
   elif [ "$1" == "true" ]; then
-    default_vim_colors=256
-    default_dump_colors=4
+    opt_colors=("-c" "set t_Co=256")
   elif [ "$1" -le 0 ]; then
-    default_vim_colors=0
-    default_dump_colors=0
+    opt_colors=("-c" "set t_Co=0")
   elif [ "$1" -lt 8 ]; then
-    default_vim_colors=2
-    default_dump_colors=0
+    opt_colors=("-c" "set t_Co=2")
   elif [ "$1" -lt 16 ]; then
-    default_vim_colors=8
-    default_dump_colors=1
+    opt_colors=("-c" "set t_Co=8")
   elif [ "$1" -lt 88 ]; then
-    default_vim_colors=16
-    default_dump_colors=1
+    opt_colors=("-c" "set t_Co=16")
   elif [ "$1" -lt 256 ]; then
-    default_vim_colors=88
-    default_dump_colors=2
+    opt_colors=("-c" "set t_Co=88")
   elif [ "$1" -eq 256 ]; then
-    default_vim_colors=256
-    default_dump_colors=3
+    opt_colors=("-c" "set t_Co=256")
   elif [ "$1" -gt 256 ]; then
-    default_vim_colors=256
-    default_dump_colors=4
+    opt_colors=("-c" "set t_Co=256")
   else
-    default_vim_colors=""
-    default_dump_colors="2"
+    opt_colors=("-c" "set t_Co&")
   fi
-
-  set_opt_vim_colors "$default_vim_colors"
-  set_opt_dump_colors "$default_dump_colors"
 }
 set_opt_colors "$default_colors"
-# Note: The previous call sets the values for $default_vim_colors and
-#       $default_dump_colors, which are later used by print_usage().
 
 set_opt_cmd() {
   opt_cmd_internal="$opt_cmd_internal | $1"
@@ -385,7 +338,7 @@ process_file() {
   #       Along with the Ex mode, this prevents the screen from being cleared
   #       and restored a short while after. None of Vim usage will be visible
   #       to the user, which is good.
-  vim -X -S /usr/share/vimcat/thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors_vim[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOansicolorcodes" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
+  vim -X -S /usr/share/vimcat/thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOansicolorcodes" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
 
   cat "$tmpfile"
 }
@@ -430,12 +383,6 @@ while [ "$#" -gt 0 ]; do
         ;;
       +c|--no-colors)
         set_opt_colors 0
-        ;;
-      --vim-colors=*)
-        set_opt_vim_colors "${1#*=}"
-        ;;
-      --dump-colors=*)
-        set_opt_dump_colors "${1#*=}"
         ;;
       --set-*)
         set_opt_cmd "set ${1#--set-}"

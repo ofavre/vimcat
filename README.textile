@@ -4,29 +4,23 @@ A supercat with Vim powers!
 
 h2. How does it work?
 
-Uses a headless Vim with the @:TOhtml@ command from the @2html.vim@ plugin, to create an HTML colorized output.
+Uses a headless Vim and runs a convertion to translate the syntax highlighting into ANSI color codes, and print the file to the console to get colorized output.
 
-Then uses @elinks@ to dump the colorized output to the console.
+The translation program is a Vim Script inspired by the @2html@ plugin (see @:help :TOhtml@).
 
 h2. Options
 
 This program has many options, but you would normally use a few.
 A few options permits you to write arbitrary Vim commands.
 
-Once you've found the right colors options to fit your needs (get the exact colors you have in Vim), you would create an alias.
-
 h2. Performance
 
-@:TOhtml@ does not offer good performance as it iterates over each and every character of the file,
-finds any change in coloring, and produces the corresponding HTML tags if any change is detected.
-
-@elinks@ fills the lines to full with with space characters.
-In an attempt to reduce the load of the terminal, those trailing spaces are stripped by @sed@.
+Inspecting the syntax highlighting with @synID()@ does not offer very good performance. Moreover the script needs to iterates over each and every character of the file, to finds any change in coloring, and produces the corresponding color codes if any change is detected.
 
 h2. TODO
 
-* Debian packaging, with @--noplugin@ and embedded @2html.vim@ script
+* Fix handing of colored background (like a-la Midnight Commander: @:highlight Normal ctermbg=4@)
+* Debian packaging
 
 If performance requires:
-* Rewrite a native vim syntax file handler,
-* that outputs terminal color codes directly.
+* Rewrite a native vim syntax file handler.
