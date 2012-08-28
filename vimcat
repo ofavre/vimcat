@@ -234,157 +234,39 @@ prepare_opt_cmd() {
 set_opt_folding() {
   local cmd=""
 
-  if [ -n "$opt_foldmethod" ]; then
-    if [ "$opt_foldmethod" == "reset" ]; then
-      cmd="$cmd foldmethod&"
-    elif [ "$opt_foldmethod" == "default" ]; then
-      if [ "$default_foldmethod" == "default" ]; then
-        # Default value being "default" is a mistake for "reset"
-        cmd="$cmd foldmethod&"
+  for var in foldmethod foldlevel foldminlines tabstop shiftwidth softtabstop foldmarker; do
+    local opt_opt="opt_$var"
+    local default_opt="default_$var"
+    if [ -n "${!opt_opt}" ]; then
+      if [ "${!opt_opt}" == "reset" ]; then
+        cmd="$cmd $var&"
+      elif [ "${!opt_opt}" == "default" ]; then
+        if [ "${!default_opt}" == "default" ]; then
+          # Default value being "default" is a mistake for "reset"
+          cmd="$cmd $var&"
+        else
+          cmd="$cmd $var=${!default_opt}"
+        fi
       else
-        cmd="$cmd foldmethod=$default_foldmethod"
+        cmd="$cmd $var=${!opt_opt}"
       fi
-    else
-      cmd="$cmd foldmethod=$opt_foldmethod"
     fi
-  fi
-
-  if [ -n "$opt_foldlevel" ]; then
-    if [ "$opt_foldlevel" == "reset" ]; then
-      cmd="$cmd foldlevel&"
-    elif [ "$opt_foldlevel" == "default" ]; then
-      if [ "$default_foldlevel" == "default" ]; then
-        # Default value being "default" is a mistake for "reset"
-        cmd="$cmd foldlevel&"
-      else
-        cmd="$cmd foldlevel=$default_foldlevel"
-      fi
-    else
-      cmd="$cmd foldlevel=$opt_foldlevel"
-    fi
-  fi
-
-  if [ -n "$opt_foldminlines" ]; then
-    if [ "$opt_foldminlines" == "reset" ]; then
-      cmd="$cmd foldminlines&"
-    elif [ "$opt_foldminlines" == "default" ]; then
-      if [ "$default_foldminlines" == "default" ]; then
-        # Default value being "default" is a mistake for "reset"
-        cmd="$cmd foldminlines&"
-      else
-        cmd="$cmd foldminlines=$default_foldminlines"
-      fi
-    else
-      cmd="$cmd foldminlines=$opt_foldminlines"
-    fi
-  fi
-
-  if [ -n "$opt_tabstop" ]; then
-    if [ "$opt_tabstop" == "reset" ]; then
-      cmd="$cmd tabstop&"
-    elif [ "$opt_tabstop" == "default" ]; then
-      if [ "$default_tabstop" == "default" ]; then
-        # Default value being "default" is a mistake for "reset"
-        cmd="$cmd tabstop&"
-      else
-        cmd="$cmd tabstop=$default_tabstop"
-      fi
-    else
-      cmd="$cmd tabstop=$opt_tabstop"
-    fi
-  fi
-
-  if [ -n "$opt_shiftwidth" ]; then
-    if [ "$opt_shiftwidth" == "reset" ]; then
-      cmd="$cmd shiftwidth&"
-    elif [ "$opt_shiftwidth" == "default" ]; then
-      if [ "$default_shiftwidth" == "default" ]; then
-        # Default value being "default" is a mistake for "reset"
-        cmd="$cmd shiftwidth&"
-      else
-        cmd="$cmd shiftwidth=$default_shiftwidth"
-      fi
-    else
-      cmd="$cmd shiftwidth=$opt_shiftwidth"
-    fi
-  fi
-
-  if [ -n "$opt_softtabstop" ]; then
-    if [ "$opt_softtabstop" == "reset" ]; then
-      cmd="$cmd softtabstop&"
-    elif [ "$opt_softtabstop" == "default" ]; then
-      if [ "$default_softtabstop" == "default" ]; then
-        # Default value being "default" is a mistake for "reset"
-        cmd="$cmd softtabstop&"
-      else
-        cmd="$cmd softtabstop=$default_softtabstop"
-      fi
-    else
-      cmd="$cmd softtabstop=$opt_softtabstop"
-    fi
-  fi
-
-  if [ -n "$opt_foldmarker" ]; then
-    if [ "$opt_foldmarker" == "reset" ]; then
-      cmd="$cmd foldmarker&"
-    elif [ "$opt_foldmarker" == "default" ]; then
-      if [ "$default_foldmarker" == "default" ]; then
-        # Default value being "default" is a mistake for "reset"
-        cmd="$cmd foldmarker&"
-      else
-        cmd="$cmd foldmarker=$default_foldmarker"
-      fi
-    else
-      cmd="$cmd foldmarker=$opt_foldmarker"
-    fi
-  fi
+  done
 
   cmd="set$cmd"
   opt_folding=()
   [ -n "$cmd" ] && opt_folding=("-c" "$cmd")
 }
 
-set_opt_foldmethod() {
-  opt_foldmethod="$1"
+for var in foldmethod foldlevel foldminlines tabstop shiftwidth softtabstop foldmarker; do
+  eval "
+set_opt_$var() {
+  opt_$var=\"\$1\"
   set_opt_folding
 }
-set_opt_foldmethod "$default_foldmethod"
-
-set_opt_foldlevel() {
-  opt_foldlevel="$1"
-  set_opt_folding
-}
-set_opt_foldlevel "$default_foldlevel"
-
-set_opt_foldminlines() {
-  opt_foldminlines="$1"
-  set_opt_folding
-}
-set_opt_foldminlines "$default_foldminlines"
-
-set_opt_tabstop() {
-  opt_tabstop="$1"
-  set_opt_folding
-}
-set_opt_tabstop "$default_tabstop"
-
-set_opt_shiftwidth() {
-  opt_shiftwidth="$1"
-  set_opt_folding
-}
-set_opt_shiftwidth "$default_shiftwidth"
-
-set_opt_softtabstop() {
-  opt_softtabstop="$1"
-  set_opt_folding
-}
-set_opt_softtabstop "$default_softtabstop"
-
-set_opt_foldmarker() {
-  opt_foldmarker="$1"
-  set_opt_folding
-}
-set_opt_foldmarker "$default_foldmarker"
+set_opt_$var \"\$default_$var\"
+"
+done
 
 process_file() {
   if ! [ -r "$1" ]; then
