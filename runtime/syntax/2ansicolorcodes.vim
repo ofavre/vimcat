@@ -133,14 +133,14 @@ function! s:term_color(code, color)
   let color = a:color
   if color >= 8 && &t_Co >= 16
     let i = 0
-    if code[0] == '\x9B'
+    if code[0] == "\x9B"
+      let i = 1
+    elseif (code[0] == "\e" || code[0] == "\033" || code[0] == "\x27") && code[1] == '['
       let i = 2
-    elseif code[0] == '\e' && code[1] == '['
-      let i = 3
     endif
-    if i != 0 && code[i] != '\0'
-          \ && (code[i+1] == '%p1%dm' || code[i+1] == '%dm')
-          \ && (code[i] == 3 || code[i] == 4)
+    if i != 0 && code[i] != "\0"
+          \ && (code[i] == '3' || code[i] == '4')
+          \ && (code[(i+1):(i+1+6)] == '%p1%dm' || code[(i+1):(i+1+3)] == '%dm')
       if color >= 16
         let code = code[0 : (i)] . '8;5;' . code[(i+1) : ]
       else
