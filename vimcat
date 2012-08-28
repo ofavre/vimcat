@@ -67,8 +67,9 @@ Options:
     An empty value restores the default value, except for \`-n'.
   -c{value}, --colors={value}
     Sets Vim's \`t_Co' option, the number of values available for highlighting.
-    Value can be either auto, (empty), 0, 1, 2, 8, 16, 88, 256 or true.
-    (empty) restores default values.
+    Value can be either auto, (empty), reset, default, 0, 1, 2, 8, 16, 88, 256 or true.
+    An empty value merely skip setting the option.
+    reset enforces Vim's default value.
     0 and 1 seem do be identical, they use underline and bold white.
     2 shows a very rare usage of blue (in error messages), and syntax highlight
     use bold gray too.
@@ -93,33 +94,34 @@ Options:
     Also affects \`--set' options.
   --fdm={value}, --foldmethod={value}
     Set Vim's \`foldmethod' option.
-    An empty value skips setting the option, "default" enforces the default.
+    An empty value skips setting the option, "reset" enforces Vim's default value.
   --fdl={value}, --foldlevel={value}
     Set Vim's \`foldlevel' option.
     0 will fold to the topmost level, 1 to the second level, etc.
     Use this option if you see no folds after using \`--foldmethod'.
-    An empty value skips setting the option, "default" enforces the default.
+    An empty value skips setting the option, "reset" enforces Vim's default value.
   --fml={value}, --foldminlines={value}
     Set Vim's \`foldminlines' option.
-    An empty value skips setting the option, "default" enforces the default.
+    An empty value skips setting the option, "reset" enforces Vim's default value.
   --ts={value}, --tabstop={value}
     Set Vim's \`tabstop' option.
-    An empty value skips setting the option, "default" enforces the default.
+    An empty value skips setting the option, "reset" enforces Vim's default value.
     This helps with \`--foldmethod=indent'.
   --sw={value}, --shiftwidth={value}
     Set Vim's \`shiftwidth' option.
-    An empty value skips setting the option, "default" enforces the default.
+    An empty value skips setting the option, "reset" enforces Vim's default value.
     This helps with \`--foldmethod=indent'.
   --sts={value}, --softtabstop={value}
     Set Vim's \`softtabstop' option.
-    An empty value skips setting the option, "default" enforces the default.
+    An empty value skips setting the option, "reset" enforces Vim's default value.
     This helps with \`--foldmethod=indent'.
   --fmr={value}, --foldmarker={value}
     Set Vim's \`foldmarker' option.
-    An empty value skips setting the option, "default" enforces the default.
+    An empty value skips setting the option, "reset" enforces Vim's default value.
     Use with \`--foldmethod=marker'
 
-Default values: (default means reset to Vim's default)
+In the above, "reset" means reset to Vim's default value, whereas "default" refers to the following.
+Default values:
   line numbering: "$default_number_lines"
   colors:         "$default_colors"
                   Note, "auto" would resolve to "$auto_colors".
@@ -153,52 +155,64 @@ teardown() {
 }
 
 set_opt_number_lines() {
+  opt_number_lines=()
   case "$1" in
-    1)
-      nl=1
+    reset)
+      opt_number_lines=("-c" "let g:ansicolorcodes_number_lines&")
       ;;
-    0)
-      nl=0
+    default)
+      opt_number_lines=("-c" "let g:ansicolorcodes_number_lines=$default_number_lines")
       ;;
-    *)
-      nl=""
+    0|1)
+      opt_number_lines=("-c" "let g:ansicolorcodes_number_lines=$1")
       ;;
   esac
-
-  opt_number_lines=()
-  if [ "$nl" == "" ]; then
-    opt_number_lines=("-c" "let g:ansicolorcodes_number_lines=0")
-  else
-    opt_number_lines=("-c" "let g:ansicolorcodes_number_lines=$nl")
-  fi
 }
 set_opt_number_lines "$default_number_lines"
 
 set_opt_colors() {
   opt_colors=()
-  if [ -z "$1" ]; then
-    opt_colors=("-c" "set t_Co&")
-  elif [ "$1" == "auto" ]; then
-    set_opt_colors "$auto_colors"
-  elif [ "$1" == "true" ]; then
-    opt_colors=("-c" "set t_Co=256")
-  elif [ "$1" -le 0 ]; then
-    opt_colors=("-c" "set t_Co=0")
-  elif [ "$1" -lt 8 ]; then
-    opt_colors=("-c" "set t_Co=2")
-  elif [ "$1" -lt 16 ]; then
-    opt_colors=("-c" "set t_Co=8")
-  elif [ "$1" -lt 88 ]; then
-    opt_colors=("-c" "set t_Co=16")
-  elif [ "$1" -lt 256 ]; then
-    opt_colors=("-c" "set t_Co=88")
-  elif [ "$1" -eq 256 ]; then
-    opt_colors=("-c" "set t_Co=256")
-  elif [ "$1" -gt 256 ]; then
-    opt_colors=("-c" "set t_Co=256")
-  else
-    opt_colors=("-c" "set t_Co&")
-  fi
+  case "$1" in
+    '')
+      ;;
+    auto)
+      set_opt_colors "$auto_colors"
+      ;;
+    default)
+      if [ "$default_colors" == "default" ]; then
+        # Default shouldn't reference itself, use "reset" instead, as foolkeeper
+        # Besides, "default" and "reset" can sometime be taken for one another.
+        set_opt_colors "reset"
+      else
+        set_opt_colors "$default_colors"
+      fi
+      ;;
+    reset)
+      opt_colors=("-c" "set t_Co&")
+      ;;
+    true)
+      opt_colors=("-c" "set t_Co=256")
+      ;;
+    *)
+      if [ "$1" -le 0 ]; then
+        opt_colors=("-c" "set t_Co=0")
+      elif [ "$1" -lt 8 ]; then
+        opt_colors=("-c" "set t_Co=2")
+      elif [ "$1" -lt 16 ]; then
+        opt_colors=("-c" "set t_Co=8")
+      elif [ "$1" -lt 88 ]; then
+        opt_colors=("-c" "set t_Co=16")
+      elif [ "$1" -lt 256 ]; then
+        opt_colors=("-c" "set t_Co=88")
+      elif [ "$1" -eq 256 ]; then
+        opt_colors=("-c" "set t_Co=256")
+      elif [ "$1" -gt 256 ]; then
+        opt_colors=("-c" "set t_Co=256")
+      else
+        set_opt_colors "$auto_colors"
+      fi
+      ;;
+  esac
 }
 set_opt_colors "$default_colors"
 
@@ -220,59 +234,108 @@ prepare_opt_cmd() {
 set_opt_folding() {
   local cmd=""
 
-  if [ -n "$default_foldmethod" ]; then
-    if [ "$default_foldmethod" == "default" ]; then
+  if [ -n "$opt_foldmethod" ]; then
+    if [ "$opt_foldmethod" == "reset" ]; then
       cmd="$cmd foldmethod&"
+    elif [ "$opt_foldmethod" == "default" ]; then
+      if [ "$default_foldmethod" == "default" ]; then
+        # Default value being "default" is a mistake for "reset"
+        cmd="$cmd foldmethod&"
+      else
+        cmd="$cmd foldmethod=$default_foldmethod"
+      fi
     else
-      cmd="$cmd foldmethod=$default_foldmethod"
+      cmd="$cmd foldmethod=$opt_foldmethod"
     fi
   fi
 
-  if [ -n "$default_foldlevel" ]; then
-    if [ "$default_foldlevel" == "default" ]; then
+  if [ -n "$opt_foldlevel" ]; then
+    if [ "$opt_foldlevel" == "reset" ]; then
       cmd="$cmd foldlevel&"
+    elif [ "$opt_foldlevel" == "default" ]; then
+      if [ "$default_foldlevel" == "default" ]; then
+        # Default value being "default" is a mistake for "reset"
+        cmd="$cmd foldlevel&"
+      else
+        cmd="$cmd foldlevel=$default_foldlevel"
+      fi
     else
-      cmd="$cmd foldlevel=$default_foldlevel"
+      cmd="$cmd foldlevel=$opt_foldlevel"
     fi
   fi
 
-  if [ -n "$default_foldminlines" ]; then
-    if [ "$default_foldminlines" == "default" ]; then
+  if [ -n "$opt_foldminlines" ]; then
+    if [ "$opt_foldminlines" == "reset" ]; then
       cmd="$cmd foldminlines&"
+    elif [ "$opt_foldminlines" == "default" ]; then
+      if [ "$default_foldminlines" == "default" ]; then
+        # Default value being "default" is a mistake for "reset"
+        cmd="$cmd foldminlines&"
+      else
+        cmd="$cmd foldminlines=$default_foldminlines"
+      fi
     else
-      cmd="$cmd foldminlines=$default_foldminlines"
+      cmd="$cmd foldminlines=$opt_foldminlines"
     fi
   fi
 
-  if [ -n "$default_tabstop" ]; then
-    if [ "$default_tabstop" == "default" ]; then
+  if [ -n "$opt_tabstop" ]; then
+    if [ "$opt_tabstop" == "reset" ]; then
       cmd="$cmd tabstop&"
+    elif [ "$opt_tabstop" == "default" ]; then
+      if [ "$default_tabstop" == "default" ]; then
+        # Default value being "default" is a mistake for "reset"
+        cmd="$cmd tabstop&"
+      else
+        cmd="$cmd tabstop=$default_tabstop"
+      fi
     else
-      cmd="$cmd tabstop=$default_tabstop"
+      cmd="$cmd tabstop=$opt_tabstop"
     fi
   fi
 
-  if [ -n "$default_shiftwidth" ]; then
-    if [ "$default_shiftwidth" == "default" ]; then
+  if [ -n "$opt_shiftwidth" ]; then
+    if [ "$opt_shiftwidth" == "reset" ]; then
       cmd="$cmd shiftwidth&"
+    elif [ "$opt_shiftwidth" == "default" ]; then
+      if [ "$default_shiftwidth" == "default" ]; then
+        # Default value being "default" is a mistake for "reset"
+        cmd="$cmd shiftwidth&"
+      else
+        cmd="$cmd shiftwidth=$default_shiftwidth"
+      fi
     else
-      cmd="$cmd shiftwidth=$default_shiftwidth"
+      cmd="$cmd shiftwidth=$opt_shiftwidth"
     fi
   fi
 
-  if [ -n "$default_softtabstop" ]; then
-    if [ "$default_softtabstop" == "default" ]; then
+  if [ -n "$opt_softtabstop" ]; then
+    if [ "$opt_softtabstop" == "reset" ]; then
       cmd="$cmd softtabstop&"
+    elif [ "$opt_softtabstop" == "default" ]; then
+      if [ "$default_softtabstop" == "default" ]; then
+        # Default value being "default" is a mistake for "reset"
+        cmd="$cmd softtabstop&"
+      else
+        cmd="$cmd softtabstop=$default_softtabstop"
+      fi
     else
-      cmd="$cmd softtabstop=$default_softtabstop"
+      cmd="$cmd softtabstop=$opt_softtabstop"
     fi
   fi
 
-  if [ -n "$default_foldmarker" ]; then
-    if [ "$default_foldmarker" == "default" ]; then
+  if [ -n "$opt_foldmarker" ]; then
+    if [ "$opt_foldmarker" == "reset" ]; then
       cmd="$cmd foldmarker&"
+    elif [ "$opt_foldmarker" == "default" ]; then
+      if [ "$default_foldmarker" == "default" ]; then
+        # Default value being "default" is a mistake for "reset"
+        cmd="$cmd foldmarker&"
+      else
+        cmd="$cmd foldmarker=$default_foldmarker"
+      fi
     else
-      cmd="$cmd foldmarker=$default_foldmarker"
+      cmd="$cmd foldmarker=$opt_foldmarker"
     fi
   fi
 
@@ -282,43 +345,43 @@ set_opt_folding() {
 }
 
 set_opt_foldmethod() {
-  default_foldmethod="$1"
+  opt_foldmethod="$1"
   set_opt_folding
 }
 set_opt_foldmethod "$default_foldmethod"
 
 set_opt_foldlevel() {
-  default_foldlevel="$1"
+  opt_foldlevel="$1"
   set_opt_folding
 }
 set_opt_foldlevel "$default_foldlevel"
 
 set_opt_foldminlines() {
-  default_foldminlines="$1"
+  opt_foldminlines="$1"
   set_opt_folding
 }
 set_opt_foldminlines "$default_foldminlines"
 
 set_opt_tabstop() {
-  default_tabstop="$1"
+  opt_tabstop="$1"
   set_opt_folding
 }
 set_opt_tabstop "$default_tabstop"
 
 set_opt_shiftwidth() {
-  default_shiftwidth="$1"
+  opt_shiftwidth="$1"
   set_opt_folding
 }
 set_opt_shiftwidth "$default_shiftwidth"
 
 set_opt_softtabstop() {
-  default_softtabstop="$1"
+  opt_softtabstop="$1"
   set_opt_folding
 }
 set_opt_softtabstop "$default_softtabstop"
 
 set_opt_foldmarker() {
-  default_foldmarker="$1"
+  opt_foldmarker="$1"
   set_opt_folding
 }
 set_opt_foldmarker "$default_foldmarker"
