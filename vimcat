@@ -1,7 +1,11 @@
 #!/bin/bash
 
+#
+# Default values
+#
+
 default_number_lines=0
-default_colors="auto"
+default_colors=""
 auto_colors="$(tput colors)"
 default_foldmethod=""
 default_foldlevel=""
@@ -10,6 +14,30 @@ default_tabstop=""
 default_shiftwidth=""
 default_softtabstop=""
 default_foldmarker=""
+
+
+
+#
+# Load configuration files
+#
+
+if [ -r /etc/vimcat.conf ]; then
+  . /etc/vimcat.conf
+fi
+if [ -d /etc/vimcat.conf.d/ ]; then
+  OLDIFS="$IFS"
+  IFS=
+  for f in `find /etc/vimcat.conf.d/ -type f | sort`; do
+    . "$f"
+  done
+  IFS="$OLDIFS"
+fi
+
+
+
+#
+# Script functions
+#
 
 print_usage() {
   cat <<EOF
