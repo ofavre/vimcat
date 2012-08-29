@@ -196,6 +196,8 @@ set_opt_colors() {
     *)
       if [ "$1" -le 0 ]; then
         opt_colors=("-c" "set t_Co=0")
+      elif [ "$1" -eq 1 ]; then
+        opt_colors=("-c" "set t_Co=1")
       elif [ "$1" -lt 8 ]; then
         opt_colors=("-c" "set t_Co=2")
       elif [ "$1" -lt 16 ]; then

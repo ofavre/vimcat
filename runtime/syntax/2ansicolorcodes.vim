@@ -69,24 +69,26 @@ else
 endif
 
 " set termcap
-"     t_Co : number of colors
-"     t_AB : ANSI background
-"     t_AF : ANSI foreground
-"     t_mb : blink
-"     t_md : bold
-"     t_me : normal (no invert, no blink, no bold, default color, also no underline)
-"     t_mr : invert
-"     t_op : reset foreground and background
-"     t_se : standout end
-"     t_so : standout mode (sometimes invert)
-"     t_ue : underline end
-"     t_us : underline mode
-"     t_Ce : undercurl end
-"     t_Cs : undercurl mode
-"     t_ZH : italic mode
-"     t_ZR : italic end
-"     t_Sb : background
-"     t_Sf : foreground
+"     t_Co=8          : number of colors
+"     t_AB=\e[4%p1%dm : ANSI background
+"     t_AF=\e[3%p1%dm : ANSI foreground
+"     t_mb=\e[5m      : blink
+"     t_md=\e[1m      : bold
+"     t_me=\e[m       : normal (no invert, no blink, no bold, default color, also no underline)
+"     t_mr=\e[7m      : invert
+"     t_op=\e[39;49m  : reset foreground and background
+"     t_se=\e[27m     : standout end
+"     t_so=\e[7m      : standout mode (sometimes invert)
+"     t_ue=\e[m       : underline end
+"     t_us=\e[4m      : underline mode
+"     t_Ce=(N/A)      : undercurl end (gui mode only?)
+"     t_Cs=(N/A)      : undercurl mode (gui mode only?)
+"     t_ZH=\e[6m      : italic mode
+"     t_ZR=\e[m       : italic end
+"     t_Sb=\e[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m
+"                     : background
+"     t_Sf=\e[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m
+"                     : foreground
 " If t_Co is non zero:
 "   Use t_AB and t_AF if available, t_Sb and t_Sf otherwise.
 "   Use t_me to reset
@@ -181,62 +183,23 @@ endfun
 " See screen.c:void screen_start_highlight(int)
 function! s:screen_start_highlight(id)
   let rtn = ''
-  if ( &t_Co > 1 && s:normal_fg_bold && synIDattr(a:id, 'fg#', s:whatterm) >= 0 )
-        \ || s:down(s:last_bold, synIDattr(a:id, 'bold', s:whatterm))
-        \ || s:down(s:last_inverse, synIDattr(a:id, 'inverse', s:whatterm))
-        \ || (exists('&t_se') && &t_se == &t_me && s:down(s:last_standout, synIDattr(a:id, 'standout', s:whatterm)))
-        \ || (exists('&t_Ce') && &t_Ce == &t_me && s:down(s:last_undercurl, synIDattr(a:id, 'undercurl', s:whatterm)))
-        \ || (exists('&t_ue') && &t_ue == &t_me && s:down(s:last_underline, synIDattr(a:id, 'underline', s:whatterm)))
-        \ || (exists('&t_ZR') && &t_ZR == &t_me && s:down(s:last_italic, synIDattr(a:id, 'italic', s:whatterm)))
-    let rtn = &t_me . rtn
-    let s:last_standout = 0
-    let s:last_undercurl = 0
-    let s:last_underline = 0
-    let s:last_italic = 0
-    let s:last_inverse = 0
-    let s:last_bold = 0
-    let s:last_fg = -1
-    let s:last_bg = -1
+  if &t_Co > 1 && s:normal_fg_bold && synIDattr(a:id, 'fg#', s:whatterm) >= 0
+    let rtn = rtn . &t_me
   endif
-  if s:up(s:last_bold, synIDattr(a:id, 'bold', s:whatterm))
-    let s:last_bold = synIDattr(a:id, 'bold', s:whatterm)
+  if exists('&t_md') && synIDattr(a:id, 'bold', s:whatterm)
     let rtn = rtn . &t_md
   endif
-  if s:up(s:last_inverse, synIDattr(a:id, 'inverse', s:whatterm))
-    let s:last_inverse = synIDattr(a:id, 'inverse', s:whatterm)
+  if exists('&t_so') && synIDattr(a:id, 'standout', s:whatterm)
+    let rtn = rtn . &t_so
+  endif
+  if exists('&t_us') && (synIDattr(a:id, 'underline', s:whatterm) || synIDattr(a:id, 'undercurl', s:whatterm))
+    let rtn = rtn . &t_us
+  endif
+  if exists('&t_ZH') && synIDattr(a:id, 'italic', s:whatterm)
+    let rtn = rtn . &t_ZH
+  endif
+  if exists('&t_mr') && synIDattr(a:id, 'inverse', s:whatterm)
     let rtn = rtn . &t_mr
-  endif
-  if s:neq(s:last_standout, synIDattr(a:id, 'standout', s:whatterm))
-    let s:last_standout = synIDattr(a:id, 'standout', s:whatterm)
-    if s:last_standout
-      let rtn = rtn . &t_so
-    else
-      let rtn = rtn . &t_se
-    endif
-  endif
-  if s:neq(s:last_undercurl, synIDattr(a:id, 'undercurl', s:whatterm))
-    let s:last_undercurl = synIDattr(a:id, 'undercurl', s:whatterm)
-    if s:last_undercurl
-      let rtn = rtn . &t_Cs
-    else
-      let rtn = rtn . &t_Ce
-    endif
-  endif
-  if s:neq(s:last_underline, synIDattr(a:id, 'underline', s:whatterm))
-    let s:last_underline = synIDattr(a:id, 'underline', s:whatterm)
-    if s:last_underline
-      let rtn = rtn . &t_us
-    else
-      let rtn = rtn . &t_ue
-    endif
-  endif
-  if s:neq(s:last_italic, synIDattr(a:id, 'italic', s:whatterm))
-    let s:last_italic = synIDattr(a:id, 'italic', s:whatterm)
-    if s:last_italic
-      let rtn = rtn . &t_ZH
-    else
-      let rtn = rtn . &t_ZR
-    endif
   endif
   if &t_Co > 1
     if s:last_fg != synIDattr(a:id, 'fg#', s:whatterm) || s:last_bg != synIDattr(a:id, 'bg#', s:whatterm)
@@ -248,32 +211,69 @@ function! s:screen_start_highlight(id)
       let rtn = rtn . s:term_fg_color(synIDattr(a:id, 'fg#', s:whatterm))
             \ . s:term_bg_color(synIDattr(a:id, 'bg#', s:whatterm))
     endif
+  else
+    " The following cannot be implemented due to lack of Vim script getters
+    "let start = synIDattr(s:last_id, 'start', s:whatterm)
+    "if start
+    "  let rtn = rtn . start
+    "endif
   endif
+  let s:last_id = a:id
+  let s:last_bold = synIDattr(a:id, 'bold', s:whatterm)
+  let s:last_standout = synIDattr(a:id, 'standout', s:whatterm)
+  let s:last_undercurl = synIDattr(a:id, 'undercurl', s:whatterm)
+  let s:last_underline = synIDattr(a:id, 'underline', s:whatterm)
+  let s:last_italic = synIDattr(a:id, 'italic', s:whatterm)
+  let s:last_inverse = synIDattr(a:id, 'inverse', s:whatterm)
+  let s:last_fg = synIDattr(a:id, 'fg#', s:whatterm)
+  let s:last_bg = synIDattr(a:id, 'bg#', s:whatterm)
   return rtn
 endfun
 " See screen.c:void screen_stop_highlight()
 function! s:screen_stop_highlight()
-  let rtn = &t_me
-  "let rtn = ''
-  "let me = 0
-  "if s:last_standout
-  "  if &t_se == &t_me | let me = 1
-  "  else | let rtn = rtn . &t_se | endif
-  "endif
-  "if s:last_underline || s:last_undercurl
-  "  if &t_ue == &t_me | let me = 1
-  "  else | let rtn = rtn . &t_ue | endif
-  "endif
-  "if s:last_italic
-  "  if &t_Zr == &t_me | let me = 1
-  "  else | let rtn = rtn . &t_Zr | endif
-  "endif
-  "if me == 1 || s:last_bold || s:last_inverse
-  "  let rtn = rtn . &t_me
-  "endif
+  let rtn = ''
+  let me = 0
   if &t_Co > 1
-    let rtn = rtn . &t_op
+    if s:last_fg >= 0 || s:last_bg >= 0
+      let me = 1 " assume &t_me restores the original colors
+    else
+      " The following cannot be implemented due to lack of Vim script getters
+      "let stop = synIDattr(s:last_id, 'stop', s:whatterm)
+      "if stop
+      "  if stop == &t_me | let me = 1
+      "  else | let rtn = rtn . stop | endif
+      "endif
+    endif
   endif
+  if s:last_standout
+    if &t_se == &t_me | let me = 1
+    else | let rtn = rtn . &t_se | endif
+  endif
+  if s:last_underline || s:last_undercurl
+    if &t_ue == &t_me | let me = 1
+    else | let rtn = rtn . &t_ue | endif
+  endif
+  if s:last_italic
+    if &t_ZR == &t_me | let me = 1
+    else | let rtn = rtn . &t_ZR | endif
+  endif
+  if me == 1 || s:last_bold || s:last_inverse
+    let rtn = rtn . &t_me
+  endif
+  if &t_Co > 1
+    if s:normal_fg >= 0 | let rtn = rtn . s:term_fg_color(s:normal_fg) | endif
+    if s:normal_bg >= 0 | let rtn = rtn . s:term_bg_color(s:normal_bg) | endif
+    if s:normal_fg_bold | let rtn = rtn . &t_md | endif
+  endif
+  let s:last_id = -1
+  let s:last_bold = 0
+  let s:last_standout = 0
+  let s:last_undercurl = 0
+  let s:last_underline = 0
+  let s:last_italic = 0
+  let s:last_inverse = 0
+  let s:last_fg = -1
+  let s:last_bg = -1
   return rtn
 endfun
 " See screen.c:void reset_cterm_colors()
@@ -281,12 +281,9 @@ function! s:reset_cterm_colors()
   let rtn = ''
   if &t_Co > 1
     if s:normal_fg >= 0 || s:normal_bg >= 0
-      let s:last_fg = -1
-      let s:last_bg = -1
       let rtn = rtn . &t_op
     endif
     if s:normal_fg_bold
-      let s:last_bold = 0
       let rtn = rtn . &t_me
     endif
   endif
@@ -296,7 +293,7 @@ endfun
 function! s:Format(text, name)
   let text = strtrans(a:text)
   let s:id = synIDtrans(hlID(a:name))
-  return s:screen_start_highlight(s:id) . text
+  return s:screen_start_highlight(s:id) . text . s:screen_stop_highlight()
 endfun
 
 
@@ -531,14 +528,13 @@ while s:lnum <= s:end
         let s:new = s:new . s:Format(s:expandedtab,  s:id_name)
       endif
     endwhile
-    let s:new = s:new . s:Format('', 'Normal')
   endif
 
   call extend(s:lines, split(s:new, '\n', 1))
   let s:lnum = s:lnum + 1
 endwhile
 
-let s:lines[-1] = s:lines[-1] . s:screen_stop_highlight()
+let s:lines[-1] = s:lines[-1] . s:reset_cterm_colors()
 let s:lines[0] = s:reset_cterm_colors() . s:lines[0]
 
 exe s:newwin . 'wincmd w'
