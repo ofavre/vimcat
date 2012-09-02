@@ -293,7 +293,7 @@ endif
 " Split window to create a buffer with the ANSI color coded file.
 let s:orgbufnr = winbufnr(0)
 let s:origwin_stl = &l:stl
-if expand("%") == ""
+if expand('%') == ''
   exec 'new Untitled.cat'
 else
   exec 'new %.cat'
@@ -340,27 +340,27 @@ else
   setlocal bomb
 endif
 
-exe s:orgwin . "wincmd w"
+exe s:orgwin . 'wincmd w'
 
 
 
 " Now loop over all lines in the original text to convert to html.
 " Use html_start_line and html_end_line if they are set.
-if exists("g:html_start_line")
+if exists('g:html_start_line')
   let s:lnum = html_start_line
-  if s:lnum < 1 || s:lnum > line("$")
+  if s:lnum < 1 || s:lnum > line('$')
     let s:lnum = 1
   endif
 else
   let s:lnum = 1
 endif
-if exists("g:html_end_line")
+if exists('g:html_end_line')
   let s:end = html_end_line
-  if s:end < s:lnum || s:end > line("$")
-    let s:end = line("$")
+  if s:end < s:lnum || s:end > line('$')
+    let s:end = line('$')
   endif
 else
-  let s:end = line("$")
+  let s:end = line('$')
 endif
 
 
@@ -454,7 +454,7 @@ while s:lnum <= s:end
         let s:expandedtab = strpart(s:line, s:startcol - 1, s:col - s:startcol)
         if s:settings.expand_tabs
           let s:offset = 0
-          let s:idx = stridx(s:expandedtab, '\t')
+          let s:idx = stridx(s:expandedtab, "\t")
           while s:idx >= 0
             if has('multi_byte_encoding')
               if s:startcol + s:idx == 1
@@ -473,7 +473,7 @@ while s:lnum <= s:end
               let s:i = &ts - ((s:idx + s:startcol - 1) % &ts)
             endif
             let s:expandedtab = substitute(s:expandedtab, '\t', repeat(' ', s:i), '')
-            let s:idx = stridx(s:expandedtab, '\t')
+            let s:idx = stridx(s:expandedtab, "\t")
           endwhile
         end
 
