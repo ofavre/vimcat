@@ -49,25 +49,6 @@ let s:last_undercurl = 0
 let s:last_italic = 0
 let s:last_underline = 0
 
-" Now loop over all lines in the original text to convert to ANSI color codes.
-" Use ansicolorcodes_start_line and ansicolorcodes_end_line if they are set.
-if exists('g:ansicolorcodes_start_line')
-  let s:lnum = ansicolorcodes_start_line
-  if s:lnum < 1 || s:lnum > line('$')
-    let s:lnum = 1
-  endif
-else
-  let s:lnum = 1
-endif
-if exists('g:ansicolorcodes_end_line')
-  let s:end = ansicolorcodes_end_line
-  if s:end < s:lnum || s:end > line('$')
-    let s:end = line('$')
-  endif
-else
-  let s:end = line('$')
-endif
-
 " set termcap
 "     t_Co=8          : number of colors
 "     t_AB=\e[4%p1%dm : ANSI background
@@ -330,32 +311,22 @@ set magic
 " set the fileencoding to match the charset we'll be using
 let &l:fileencoding=s:settings.vim_encoding
 
-" According to http://www.w3.org/TR/html4/charset.html#doc-char-set, the byte
-" order mark is highly recommend on the web when using multibyte encodings. But,
-" it is not a good idea to include it on UTF-8 files. Otherwise, let Vim
-" determine when it is actually inserted.
-if s:settings.vim_encoding == 'utf-8'
-  setlocal nobomb
-else
-  setlocal bomb
-endif
-
 exe s:orgwin . 'wincmd w'
 
 
 
-" Now loop over all lines in the original text to convert to html.
-" Use html_start_line and html_end_line if they are set.
-if exists('g:html_start_line')
-  let s:lnum = html_start_line
+" Now loop over all lines in the original text to convert to ANSI color codes.
+" Use ansicolorcodes_start_line and ansicolorcodes_end_line if they are set.
+if exists('g:ansicolorcodes_start_line')
+  let s:lnum = ansicolorcodes_start_line
   if s:lnum < 1 || s:lnum > line('$')
     let s:lnum = 1
   endif
 else
   let s:lnum = 1
 endif
-if exists('g:html_end_line')
-  let s:end = html_end_line
+if exists('g:ansicolorcodes_end_line')
+  let s:end = ansicolorcodes_end_line
   if s:end < s:lnum || s:end > line('$')
     let s:end = line('$')
   endif
@@ -369,6 +340,13 @@ if s:settings.number_lines
   let s:margin = max([3, strlen(s:end)]) + 1
 else
   let s:margin = 0
+endif
+
+if has('folding') && !s:settings.ignore_folding
+  let s:foldfillchar = &fillchars[matchend(&fillchars, 'fold:')]
+  if s:foldfillchar == ''
+    let s:foldfillchar = '-'
+  endif
 endif
 
 if !s:settings.expand_tabs
@@ -392,22 +370,18 @@ while s:lnum <= s:end
 
   let s:new = ''
 
-  if has('folding') && !s:settings.ignore_folding && foldclosed(s:lnum) > -1 && !s:settings.dynamic_folds
+  if has('folding') && !s:settings.ignore_folding && foldclosed(s:lnum) > -1
     "
-    " This is the beginning of a folded block (with no dynamic folding)
+    " This is the beginning of a folded block
     "
     let s:new = s:numcol . foldtextresult(s:lnum)
-    " HTML line wrapping is off--go ahead and fill to the margin
+    " Go ahead and fill to the margin
     let s:new = s:new . repeat(s:foldfillchar, &columns - strlen(s:new))
 
     let s:new = s:Format(s:new, 'Folded')
 
     " Skip to the end of the fold
     let s:new_lnum = foldclosedend(s:lnum)
-
-    if !s:settings.no_progress
-      call s:pgb.incr(s:new_lnum - s:lnum)
-    endif
 
     let s:lnum = s:new_lnum
 
