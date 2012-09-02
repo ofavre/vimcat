@@ -366,7 +366,7 @@ endif
 
 
 if s:settings.number_lines
-  let s:margin = strlen(s:end) + 1
+  let s:margin = max([3, strlen(s:end)]) + 1
 else
   let s:margin = 0
 endif
