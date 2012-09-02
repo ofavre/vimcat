@@ -232,6 +232,15 @@ function! s:reset_cterm_colors()
       let rtn = rtn . &t_me
     endif
   endif
+  let s:last_id = -1
+  let s:last_bold = 0
+  let s:last_standout = 0
+  let s:last_undercurl = 0
+  let s:last_underline = 0
+  let s:last_italic = 0
+  let s:last_inverse = 0
+  let s:last_fg = -1
+  let s:last_bg = -1
   return rtn
 endfun
 
@@ -368,7 +377,11 @@ while s:lnum <= s:end
     let s:numcol = ''
   endif
 
-  let s:new = ''
+  if s:normal_bg >= 0
+    let s:new = &t_ce " clear to end of line to apply the normal background color
+  else
+    let s:new = ''
+  endif
 
   if has('folding') && !s:settings.ignore_folding && foldclosed(s:lnum) > -1
     "
@@ -473,7 +486,7 @@ while s:lnum <= s:end
 endwhile
 
 let s:lines[-1] = s:lines[-1] . s:reset_cterm_colors()
-let s:lines[0] = s:reset_cterm_colors() . s:lines[0]
+let s:lines[0] = s:reset_cterm_colors() . s:screen_stop_highlight() . s:lines[0]
 
 exe s:newwin . 'wincmd w'
 call setline(1, s:lines)
