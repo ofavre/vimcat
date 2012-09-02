@@ -93,42 +93,6 @@ endif
 "   Use t_AB and t_AF if available, t_Sb and t_Sf otherwise.
 "   Use t_me to reset
 
-function! s:neq(a, b)
-  if a:a
-    if a:b
-      return 0
-    else
-      return 1
-    endif
-  else
-    if a:b
-      return 1
-    else
-      return 0
-    endif
-  endif
-endfun
-function! s:up(a, b)
-  if a:a
-    return 0
-  elseif a:b
-    return 1
-  else
-    return 0
-  endif
-endfun
-function! s:down(a, b)
-  if a:a
-    if a:b
-      return 0
-    else
-      return 1
-    endif
-  else
-    return 0
-  endif
-endfun
-
 " See term.c:void term_color(uchar*,int)
 function! s:term_color(code, color)
   let code = a:code
@@ -580,9 +544,6 @@ unlet! s:col s:id s:len s:line s:new s:expandedtab s:concealinfo
 unlet! s:orgwin s:newwin s:orgbufnr s:idx s:i s:offset s:ls s:origwin_stl
 unlet! s:newwin_stl s:current_syntax
 if !v:profiling
-  delfunc s:neq
-  delfunc s:up
-  delfunc s:down
   delfunc s:Format
   delfunc s:screen_start_highlight
   delfunc s:screen_stop_highlight
