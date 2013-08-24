@@ -58,6 +58,9 @@ Options:
     Arguments seen after this marker are treated as files.
     This permits to process filenames that would otherwise been taken for
     arguments.
+  -f={filename}
+    Process the given file. This permits to continue interleaving options for
+    following files, as opposed to using \`--'.
   -n, --line-number, --nl
     Activates line numbering.
   +n, --no-line-number, --no-nl
@@ -389,6 +392,9 @@ while [ "$#" -gt 0 ]; do
       --fmr=*|--foldmarker=*)
         set_opt_foldmarker "${1#*=}"
         ;;
+      -f=*)
+        process_file "${1#*=}"
+	;;
       *)
         process_file "$1"
     esac
