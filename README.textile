@@ -14,18 +14,21 @@ To uninstall, issue the following:
 
 h2. How does it work?
 
-Uses a headless Vim and runs a convertion to translate the syntax highlighting into ANSI color codes, and print the file to the console to get colorized output.
+Uses a headless Vim and runs a convertion VimScript to translate the syntax highlighting into ANSI color codes, and print the file to the console to get colorized output.
+This software consists solely of VimScript and bash.
 
 The translation program is a Vim Script inspired by the @2html@ plugin (see @:help :TOhtml@).
 
 h2. Options
 
-This program has many options, but you would normally use a few.
-A few options permits you to write arbitrary Vim commands.
+This program has many options, but you would normally use a few, if any. Use --help for more information.
+A few options permits you to issue arbitrary Vim commands.
 
 h2. Performance
 
-Inspecting the syntax highlighting with @synID()@ does not offer very good performance. Moreover the script needs to iterates over each and every character of the file, to finds any change in coloring, and produces the corresponding color codes if any change is detected.
+Inspecting the syntax highlighting with @synID()@ does not offer very good performance.
+Moreover the script needs to iterates over each and every character of the file, to finds any change in coloring, and produces the corresponding color codes if any change is detected.
+In 256 color modes, the parameterized strings used to output the correct color escape codes are a bit time consuming too.
 
 h2. TODO
 
