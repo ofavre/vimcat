@@ -19,7 +19,6 @@ Inspecting the syntax highlighting with @synID()@ does not offer very good perfo
 
 h2. TODO
 
-* Fix handing of colored background (like a-la Midnight Commander: @:highlight Normal ctermbg=4@)
 * Debian packaging
 
 If performance requires:
