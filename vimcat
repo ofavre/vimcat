@@ -32,6 +32,9 @@ if [ -d /etc/vimcat.conf.d/ ]; then
   done
   IFS="$OLDIFS"
 fi
+if [ -r ~/.vimcatrc ]; then
+  . ~/.vimcatrc
+fi
 
 
 
