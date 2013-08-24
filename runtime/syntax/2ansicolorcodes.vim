@@ -103,10 +103,121 @@ function! s:term_color(code, color)
   return s:tgoto(code, color)
 endfun
 " See termlib.c:char* tgoto(char*,int,int)
+" See man terminfo(5)#Parameterized-Strings
 function! s:tgoto(code, color)
-  let code = substitute(a:code, '%%', '%', 'g')
-  let code = substitute(code, '%p.%d', '%d', 'g')
-  let code = substitute(code, '%d', a:color, '')
+  let acolor = a:color   " as a variable, because it could be modified
+  let stack = []         " value stack
+  let e = strlen(a:code) " end offset of a:code
+  let i = 0              " current offset inside a:code
+  let ifmatched = 0      " whether a %t (then) matched
+  let seekto = ''        " request to seek to a particular string sequence
+  let code = ''          " string output
+  while i < e
+    let c = a:code[i]
+    if c == '%' && i + 1 < e
+      let i = i + 1
+      let c = a:code[i]
+      if c == '%'
+        let code = code . '%'
+      elseif c == 'p' && i + 1 < e && a:code[i+1] == '1' " push parameter 1 onto the stack
+        " Only %p1 is defined, it is the color
+        let i = i + 1
+        let stack += [acolor]
+      elseif c == 'd' " format number (simplified)
+        let code = code . printf('%d', remove(stack, -1))
+      elseif c == 's' " format string (simplified)
+        let code = code . printf('%s', remove(stack, -1))
+      elseif c == "'" && i + 2 < e && a:code[i+2] == "'" " push a character onto the stack
+        let i = i + 2
+        let stack += [a:code[i-1]]
+      elseif c == '{' && i + 2 < e && a:code[i+2] == '}' " push a 1-digit number onto the stack
+        let i = i + 2
+        let stack += [a:code[i-1]]
+      elseif c == '{' && i + 3 < e && a:code[i+3] == '}' " push a 2-digit number onto the stack
+        let i = i + 3
+        let stack += [a:code[i-2:i-1]]
+      elseif c == '{' && i + 4 < e && a:code[i+4] == '}' " push a 3-digit number onto the stack (no need for more apparently)
+        let i = i + 4
+        let stack += [a:code[i-3:i-1]]
+      elseif c == 'l' " replace topmost value by its length
+        let stack += [strlen(remove(stack, -1))]
+      elseif c == '+' " add the two topmost values
+        let b = remove(stack, -1) + 0
+        let a = remove(stack, -1) + 0
+        let stack += [a + b]
+      elseif c == '-' " subtract the two topmost values
+        let b = remove(stack, -1) + 0
+        let a = remove(stack, -1) + 0
+        let stack += [a - b]
+      elseif c == '*' " multiply the two topmost values
+        let b = remove(stack, -1) + 0
+        let a = remove(stack, -1) + 0
+        let stack += [a * b]
+      elseif c == '/' " divide the two topmost values
+        let b = remove(stack, -1) + 0
+        let a = remove(stack, -1) + 0
+        let stack += [a / b]
+      elseif c == 'm' " calculate modulus of the two topmost values
+        let b = remove(stack, -1) + 0
+        let a = remove(stack, -1) + 0
+        let stack += [a % b]
+      elseif c == '&' || c == '|' || c == '^' || c == '!' || c == '~'
+        " %& %| %^ %! %~ bitwise operations AND OR XOR NOT are not supported by vim
+      elseif c == '<' " less-than comparison of the two topmost values
+        let b = remove(stack, -1) + 0
+        let a = remove(stack, -1) + 0
+        let stack += [a < b]
+      elseif c == '=' " equality comparison of the two topmost values
+        let b = remove(stack, -1) + 0
+        let a = remove(stack, -1) + 0
+        let stack += [a == b]
+      elseif c == '>' " greater-than comparison of the two topmost values
+        let b = remove(stack, -1) + 0
+        let a = remove(stack, -1) + 0
+        let stack += [a > b]
+      elseif c == 'i' " increment %p1
+        let acolor = acolor + 1
+      elseif c == '?' " if start
+        " Ignore if nesting for simplicity
+      elseif c == 't' " then
+        if ifmatched == 1 " (should not happen)
+          let seekto = '%;'
+        elseif remove(stack, -1) == 0 " test topmost value
+          let seekto = '%e' " jump to next else
+        else
+          let ifmatched = 1 " note we are inside an if clause body to permit jumping to if end afterwards
+        endif
+      elseif c == 'e' " else
+        if ifmatched == 1 " the previous then matched, jump to if end
+          let seekto = '%;'
+        endif
+      elseif c == ';' " if end
+        let ifmatched = 0
+      else " unknown escape
+        let code = code . '%' . c
+      endif
+    else " regular character
+      let code = code . c
+    endif
+    let i = i + 1
+    " Eventual seek
+    if seekto != ''
+      let pos = stridx(a:code, seekto, i)
+      if pos == -1 " rescue string not found by ignoring seek
+        let pos = i
+      endif
+      if seekto != '%;'
+        " Seeks are used inside ifs, don't permit crossing the if end
+        let ifend = stdidx(a:code, '%;', i)
+        if ifend < pos " cap to if end if sought string is further (no final %e before %;)
+          let pos = ifend
+        endif
+      endif
+      let i = pos
+      let seekto = ''
+    endif
+  endwhile
+
   return code
 endfun
 " See term.c:void term_fg_color(int)
