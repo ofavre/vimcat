@@ -1,0 +1,17 @@
+Source: vimcat
+Section: universe/utils
+Priority: optional
+Maintainer: Olivier Favre <of.olivier.favre@gmail.com>
+Build-Depends: debhelper (>= 7.0.50)
+Standards-Version: 3.8.4
+Vcs-Git: https://github.com/ofavre/vimcat.git
+Vcs-browser: https://github.com/ofavre/vimcat/tree/master
+Homepage: https://github.com/ofavre/vimcat
+
+Package: vimcat
+Section: universe/utils
+Architecture: all
+Depends: vim
+Description: A supercat with Vim powers
+ Uses the famous vim text editor syntax highlighting capabilities
+ to colorize files you cat.

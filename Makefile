@@ -1,3 +1,5 @@
+PREFIX ?= /usr
+
 all: build
 
 clean:
@@ -6,43 +8,45 @@ clean:
 build: runtime/syntax/2ansicolorcodes_colors.vim
 
 runtime/syntax/2ansicolorcodes_colors.vim:
-	cd runtime/syntax/ && vim -X -S ../../make-rgb-index.vim -E -n
+	cd runtime/syntax/ && vim -X -S ../../make-rgb-index.vim -E -n >/dev/null
 
 install:
-	install -m0755 vimcat /usr/bin/
-	install -d /usr/share/vimcat/
-	install -m0644 thisvimrc /usr/share/vimcat/
-	install -m0644 make-rgb-index.vim /usr/share/vimcat/
-	install -d /usr/share/vimcat/runtime/
-	install -d /usr/share/vimcat/runtime/autoload/
-	install -m0644 runtime/autoload/toansicolorcodes.vim /usr/share/vimcat/runtime/autoload/
-	install -d /usr/share/vimcat/runtime/doc/
-	install -m0644 runtime/doc/syntax.txt /usr/share/vimcat/runtime/doc/
-	install -d /usr/share/vimcat/runtime/plugin/
-	install -m0644 runtime/plugin/toansicolorcodes.vim /usr/share/vimcat/runtime/plugin/
-	install -d /usr/share/vimcat/runtime/syntax/
-	install -m0644 runtime/syntax/2ansicolorcodes.vim /usr/share/vimcat/runtime/syntax/
-	install -m0644 runtime/syntax/2ansicolorcodes_colors.vim /usr/share/vimcat/runtime/syntax/
-	install -d /etc/vimcat.conf.d/
+	install -d $(DESTDIR)$(PREFIX)/bin/
+	install -d $(DESTDIR)$(PREFIX)/share/
+	install -m0755 vimcat $(DESTDIR)$(PREFIX)/bin/
+	install -d $(DESTDIR)$(PREFIX)/share/vimcat/
+	install -m0644 thisvimrc $(DESTDIR)$(PREFIX)/share/vimcat/
+	install -m0644 make-rgb-index.vim $(DESTDIR)$(PREFIX)/share/vimcat/
+	install -d $(DESTDIR)$(PREFIX)/share/vimcat/runtime/
+	install -d $(DESTDIR)$(PREFIX)/share/vimcat/runtime/autoload/
+	install -m0644 runtime/autoload/toansicolorcodes.vim $(DESTDIR)$(PREFIX)/share/vimcat/runtime/autoload/
+	install -d $(DESTDIR)$(PREFIX)/share/vimcat/runtime/doc/
+	install -m0644 runtime/doc/syntax.txt $(DESTDIR)$(PREFIX)/share/vimcat/runtime/doc/
+	install -d $(DESTDIR)$(PREFIX)/share/vimcat/runtime/plugin/
+	install -m0644 runtime/plugin/toansicolorcodes.vim $(DESTDIR)$(PREFIX)/share/vimcat/runtime/plugin/
+	install -d $(DESTDIR)$(PREFIX)/share/vimcat/runtime/syntax/
+	install -m0644 runtime/syntax/2ansicolorcodes.vim $(DESTDIR)$(PREFIX)/share/vimcat/runtime/syntax/
+	install -m0644 runtime/syntax/2ansicolorcodes_colors.vim $(DESTDIR)$(PREFIX)/share/vimcat/runtime/syntax/
+	install -d $(DESTDIR)/etc/vimcat.conf.d/
 
 uninstall:
-	rm -f									\
-		/usr/bin/vimcat							\
-		/usr/share/vimcat/thisvimrc					\
-		/usr/share/vimcat/make-rgb-index.vim				\
-		/usr/share/vimcat/runtime/autoload/toansicolorcodes.vim		\
-		/usr/share/vimcat/runtime/doc/syntax.txt			\
-		/usr/share/vimcat/runtime/plugin/toansicolorcodes.vim		\
-		/usr/share/vimcat/runtime/syntax/2ansicolorcodes.vim		\
-		/usr/share/vimcat/runtime/syntax/2ansicolorcodes_colors.vim	\
-		/etc/vimcat.conf
-	rmdir --ignore-fail-on-non-empty					\
-		/usr/share/vimcat/runtime/autoload/				\
-		/usr/share/vimcat/runtime/doc/					\
-		/usr/share/vimcat/runtime/plugin/				\
-		/usr/share/vimcat/runtime/syntax/				\
-		/usr/share/vimcat/runtime/					\
-		/usr/share/vimcat/						\
-		/etc/vimcat.conf.d/
+	rm -f											\
+		$(DESTDIR)$(PREFIX)/bin/vimcat							\
+		$(DESTDIR)$(PREFIX)/share/vimcat/thisvimrc					\
+		$(DESTDIR)$(PREFIX)/share/vimcat/make-rgb-index.vim				\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/autoload/toansicolorcodes.vim		\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/doc/syntax.txt				\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/plugin/toansicolorcodes.vim		\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/syntax/2ansicolorcodes.vim		\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/syntax/2ansicolorcodes_colors.vim	\
+		$(DESTDIR)/etc/vimcat.conf
+	rmdir --ignore-fail-on-non-empty							\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/autoload/				\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/doc/					\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/plugin/				\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/syntax/				\
+		$(DESTDIR)$(PREFIX)/share/vimcat/runtime/					\
+		$(DESTDIR)$(PREFIX)/share/vimcat/						\
+		$(DESTDIR)/etc/vimcat.conf.d/
 
 .PHONY: all help clean build install uninstall

@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer: Olivier Favre <of.olivier.favre@gmail.com>
-" Last Change: 2012 Aug 22
+" Last Change: 2013 Sep 3
 
 " Transform a file into ANSI color codes, using the current syntax highlighting.
 

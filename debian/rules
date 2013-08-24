@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#DH_VERBOSE=1           # local variable, will only affect dh* commands.
+#export DH_VERBOSE=1    # environment variable, will recursively affect all dh* subcommands.
+#export DH_OPTIONS=-v
+
+# Delegate to debhelper
+%:
+	dh $@
+
+.PHONY:
