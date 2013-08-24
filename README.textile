@@ -2,6 +2,16 @@ h1. vimcat
 
 A supercat with Vim powers!
 
+h2. Installing
+
+Simply issue the following:
+
+    sudo make install
+
+To uninstall, issue the following:
+
+    sudo make uninstall
+
 h2. How does it work?
 
 Uses a headless Vim and runs a convertion to translate the syntax highlighting into ANSI color codes, and print the file to the console to get colorized output.
