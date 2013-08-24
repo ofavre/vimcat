@@ -4,7 +4,7 @@
 # Default values
 #
 
-default_number_lines=0
+default_number_lines=""
 default_colors=""
 auto_colors="$(tput colors)"
 default_foldmethod=""
