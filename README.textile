@@ -6,11 +6,11 @@ h2. Installing
 
 Simply issue the following:
 
-    sudo make install
+```sudo make install```
 
 To uninstall, issue the following:
 
-    sudo make uninstall
+```sudo make uninstall```
 
 h2. How does it work?
 
@@ -21,7 +21,7 @@ The translation program is a Vim Script inspired by the @2html@ plugin (see @:he
 
 h2. Options
 
-This program has many options, but you would normally use a few, if any. Use --help for more information.
+This program has many options, but you would normally use a few, if any. Use @--help@ for more information.
 A few options permits you to issue arbitrary Vim commands.
 
 h2. Performance
