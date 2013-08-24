@@ -35,6 +35,9 @@ fi
 if [ -r ~/.vimcatrc ]; then
   . ~/.vimcatrc
 fi
+if [ -r ./.vimcatrc ]; then
+  . ./.vimcatrc
+fi
 
 
 
@@ -144,6 +147,13 @@ Remarks:
   imply that you cannot use more colors.
   For eg. using Konsole, tput reports 8 colors, which is the value Vim uses,
   but can handle 24 bits colors.
+
+You can modify the default values through use of configuration files.
+The files, if they exist, are read in the following order:
+  /etc/vimcat.conf
+  /etc/vimcat.conf.d/*
+  ~/.vimcatrc
+  ./.vimcatrc
 EOF
 }
 
