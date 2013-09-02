@@ -242,7 +242,7 @@ set_opt_cmd_reset() {
 }
 set_opt_cmd_reset
 prepare_opt_cmd() {
-  if [ "${#opt_cmd_internal[@]}" -eq 0 ]; then
+  if [ "${#opt_cmd_internal}" -eq 0 ]; then
     opt_cmd=()
   else
     opt_cmd=("-c" "${opt_cmd_internal# | }")
@@ -271,9 +271,8 @@ set_opt_folding() {
     fi
   done
 
-  cmd="set$cmd"
   opt_folding=()
-  [ -n "$cmd" ] && opt_folding=("-c" "$cmd")
+  [ -n "$cmd" ] && opt_folding=("-c" "set$cmd")
 }
 
 for var in foldmethod foldlevel foldminlines tabstop shiftwidth softtabstop foldmarker; do
