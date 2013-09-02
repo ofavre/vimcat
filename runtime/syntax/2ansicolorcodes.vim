@@ -220,6 +220,9 @@ function! s:tgoto(code, color)
 
   return code
 endfun
+function! s:color_is_set(color)
+  return a:color != '' && a:color >= 0
+endfun
 " See term.c:void term_fg_color(int)
 function! s:term_fg_color(color)
   if a:color == '' || a:color < 0
@@ -239,7 +242,7 @@ endfun
 " See screen.c:void screen_start_highlight(int)
 function! s:screen_start_highlight(id)
   let rtn = ''
-  if &t_Co > 1 && s:normal_fg_bold && synIDattr(a:id, 'fg#', s:whatterm) >= 0
+  if &t_Co > 1 && s:normal_fg_bold && s:color_is_set(synIDattr(a:id, 'fg#', s:whatterm))
     let rtn = rtn . &t_me
   endif
   if exists('&t_md') && synIDattr(a:id, 'bold', s:whatterm)
@@ -259,7 +262,7 @@ function! s:screen_start_highlight(id)
   endif
   if &t_Co > 1
     if s:last_fg != synIDattr(a:id, 'fg#', s:whatterm) || s:last_bg != synIDattr(a:id, 'bg#', s:whatterm)
-      if (s:last_fg >= 0 && synIDattr(a:id, 'fg#', s:whatterm) < 0) || (s:last_bg >= 0 && synIDattr(a:id, 'bg#', s:whatterm) < 0)
+      if (s:color_is_set(s:last_fg) && !s:color_is_set(synIDattr(a:id, 'fg#', s:whatterm))) || (s:color_is_set(s:last_bg) && !s:color_is_set(synIDattr(a:id, 'bg#', s:whatterm)))
         let rtn = rtn . &t_op
       endif
       let s:last_fg = synIDattr(a:id, 'fg#', s:whatterm)
@@ -290,7 +293,7 @@ function! s:screen_stop_highlight()
   let rtn = ''
   let me = 0
   if &t_Co > 1
-    if s:last_fg >= 0 || s:last_bg >= 0
+    if s:color_is_set(s:last_fg) || s:color_is_set(s:last_bg)
       let me = 1 " assume &t_me restores the original colors
     else
       " The following cannot be implemented due to lack of Vim script getters
@@ -317,8 +320,8 @@ function! s:screen_stop_highlight()
     let rtn = rtn . &t_me
   endif
   if &t_Co > 1
-    if s:normal_fg >= 0 | let rtn = rtn . s:term_fg_color(s:normal_fg) | endif
-    if s:normal_bg >= 0 | let rtn = rtn . s:term_bg_color(s:normal_bg) | endif
+    if s:color_is_set(s:normal_fg) | let rtn = rtn . s:term_fg_color(s:normal_fg) | endif
+    if s:color_is_set(s:normal_bg) | let rtn = rtn . s:term_bg_color(s:normal_bg) | endif
     if s:normal_fg_bold | let rtn = rtn . &t_md | endif
   endif
   let s:last_id = -1
@@ -336,7 +339,7 @@ endfun
 function! s:reset_cterm_colors()
   let rtn = ''
   if &t_Co > 1
-    if s:normal_fg >= 0 || s:normal_bg >= 0
+    if s:color_is_set(s:normal_fg) || s:color_is_set(s:normal_bg)
       let rtn = rtn . &t_op
     endif
     if s:normal_fg_bold
@@ -488,7 +491,7 @@ while s:lnum <= s:end
     let s:numcol = ''
   endif
 
-  if s:normal_bg >= 0
+  if s:color_is_set(s:normal_bg)
     let s:new = &t_ce " clear to end of line to apply the normal background color
   else
     let s:new = ''
