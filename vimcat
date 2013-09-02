@@ -207,7 +207,7 @@ set_opt_colors() {
       opt_colors=("-c" "set t_Co&")
       ;;
     true)
-      opt_colors=("-c" "set t_Co=256")
+      opt_colors=("-c" "set t_Co=256 | let g:ansicolorcodes_truecolors=1")
       ;;
     *)
       if [ "$1" -le 0 ]; then

@@ -13,26 +13,47 @@ let s:end=line('$')
 
 let s:settings = toansicolorcodes#GetUserSettings()
 
-if has('gui_running')
+if exists('g:ansicolorcodes_truecolors') && g:ansicolorcodes_truecolors != '0'
+
+  " Load GVim related configuration files
+  " This was not done automatically because we need to run `vim`, not `gvim`
+
+  " Load system-wide gvimrc
+  runtime gvimrc
+  " Load user-wide gvimrc
+  if filereadable(expand('~/.gvimrc'))
+    source ~/.gvimrc
+  endif
+
+  " Load colorname to RGB translation table
+  runtime syntax/2ansicolorcodes_colors.vim
+
   let s:whatterm = 'gui'
+
+  " Hard-set Konsole 24 bits color codes
+  let s:fg_code = "\x1B[38;2;%p1%sm"
+  let s:bg_code = "\x1B[48;2;%p1%sm"
+
 else
+
   if &t_Co > 1
     let s:whatterm = 'cterm'
   else
     let s:whatterm = 'term'
   endif
-endif
 
-if &t_AF != ''
-  let s:fg_code = &t_AF
-else
-  let s:fg_code = &t_Sf
-endif
+  if &t_AF != ''
+    let s:fg_code = &t_AF
+  else
+    let s:fg_code = &t_Sf
+  endif
 
-if &t_AB != ''
-  let s:bg_code = &t_AB
-else
-  let s:bg_code = &t_Sb
+  if &t_AB != ''
+    let s:bg_code = &t_AB
+  else
+    let s:bg_code = &t_Sb
+  endif
+
 endif
 
 let s:normal_id = synIDtrans(hlID('normal'))
@@ -223,22 +244,54 @@ endfun
 function! s:color_is_set(color)
   return a:color != '' && a:color >= 0
 endfun
-" See term.c:void term_fg_color(int)
-function! s:term_fg_color(color)
-  if a:color == '' || a:color < 0
-    return ''
-  else
-    return s:term_color(s:fg_code, a:color)
-  endif
-endfun
-" See term.c:void term_bg_color(int)
-function! s:term_bg_color(color)
-  if a:color == '' || a:color < 0
-    return ''
-  else
-    return s:term_color(s:bg_code, a:color)
-  endif
-endfun
+if s:whatterm == 'gui'
+  function! s:term_fg_color(color)
+    if !s:color_is_set(a:color)
+      return ''
+    else
+      if a:color[0] == '#'
+        let r = ('0x' . a:color[1:2]) + 0
+        let g = ('0x' . a:color[3:4]) + 0
+        let b = ('0x' . a:color[5:6]) + 0
+        return s:term_color(s:fg_code, r . ';' . g . ';' . b)
+      else
+        return s:term_color(s:fg_code, g:ansicolorcodes_colors[tolower(a:color)])
+      endif
+    endif
+  endfun
+  " See term.c:void term_bg_color(int)
+  function! s:term_bg_color(color)
+    if !s:color_is_set(a:color)
+      return ''
+    else
+      if a:color[0] == '#'
+        let r = ('0x' . a:color[1:2]) + 0
+        let g = ('0x' . a:color[3:4]) + 0
+        let b = ('0x' . a:color[5:6]) + 0
+        return s:term_color(s:bg_code, r . ';' . g . ';' . b)
+      else
+        return s:term_color(s:bg_code, g:ansicolorcodes_colors[tolower(a:color)])
+      endif
+    endif
+  endfun
+else
+  " See term.c:void term_fg_color(int)
+  function! s:term_fg_color(color)
+    if !s:color_is_set(a:color)
+      return ''
+    else
+      return s:term_color(s:fg_code, a:color)
+    endif
+  endfun
+  " See term.c:void term_bg_color(int)
+  function! s:term_bg_color(color)
+    if !s:color_is_set(a:color)
+      return ''
+    else
+      return s:term_color(s:bg_code, a:color)
+    endif
+  endfun
+endif
 " See screen.c:void screen_start_highlight(int)
 function! s:screen_start_highlight(id)
   let rtn = ''
