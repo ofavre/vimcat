@@ -10,7 +10,7 @@ build: runtime/syntax/2ansicolorcodes_colors.vim
 runtime/syntax/2ansicolorcodes_colors.vim:
 	cd runtime/syntax/ && vim -X -S ../../make-rgb-index.vim -E -n >/dev/null
 
-install:
+install: build
 	install -d $(DESTDIR)$(PREFIX)/bin/
 	install -d $(DESTDIR)$(PREFIX)/share/
 	install -m0755 vimcat $(DESTDIR)$(PREFIX)/bin/
