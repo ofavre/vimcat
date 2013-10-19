@@ -160,7 +160,7 @@ EOF
 init_tempfile() {
   # Do once
   # The ansi color coded output is stored in a temporary file
-  [ -z "$tmpfile" ] && tmpfile="$(mktemp)"
+  [ -z "$tmpfile" ] && tmpfile="$(mktemp "${TMPDIR-/tmp/}tmp.XXXXXXXXXX")"
 }
 
 teardown() {
