@@ -8,7 +8,7 @@ clean:
 build: runtime/syntax/2ansicolorcodes_colors.vim
 
 runtime/syntax/2ansicolorcodes_colors.vim:
-	cd runtime/syntax/ && vim -X -S ../../make-rgb-index.vim -E -n >/dev/null
+	cd runtime/syntax/ && vim -u NONE -X -S ../../make-rgb-index.vim -E -n >/dev/null
 
 install: build
 	install -d $(DESTDIR)$(PREFIX)/bin/
