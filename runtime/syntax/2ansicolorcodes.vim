@@ -69,6 +69,8 @@ let s:last_standout = 0
 let s:last_undercurl = 0
 let s:last_italic = 0
 let s:last_underline = 0
+" memoization
+let s:term_color_cache = {}
 
 " set termcap
 "     t_Co=8          : number of colors
@@ -99,6 +101,11 @@ let s:last_underline = 0
 function! s:term_color(code, color)
   let code = a:code
   let color = a:color
+  " Already memoized?
+  let cache_key = color."#".code
+  if has_key(s:term_color_cache, cache_key)
+    return s:term_color_cache[cache_key]
+  endif
   if color >= 8 && &t_Co >= 16
     let i = 0
     if code[0] == "\x9B"
@@ -121,7 +128,10 @@ function! s:term_color(code, color)
       endif
     endif
   endif
-  return s:tgoto(code, color)
+  let rtn = s:tgoto(code, color)
+  " Memoize result
+  let s:term_color_cache[cache_key] = rtn
+  return rtn
 endfun
 " See termlib.c:char* tgoto(char*,int,int)
 " See man terminfo(5)#Parameterized-Strings
@@ -714,5 +724,7 @@ unlet! s:cpo_sav
 
 unlet! s:bg_code s:cpo_sav s:fg_code s:id_name s:lines s:old_bind s:prevc s:startcol s:vcol
 unlet! s:normal_id s:normal_fg s:normal_bg s:normal_fg_bold s:last_fg s:last_bg s:last_bold s:last_inverse s:last_standout s:last_undercurl s:last_italic s:last_underline
+" Forget memoization to avoid leaking too much memory in adverse situations
+unlet! s:term_color_cache
 
 " vim: ts=8 sw=2 sts=2 et
