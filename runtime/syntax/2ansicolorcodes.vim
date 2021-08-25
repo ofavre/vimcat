@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer: Olivier Favre <of.olivier.favre@gmail.com>
-" Last Change: 2013 Sep 3
+" Last Change: 2021 Aug 25
 
 " Transform a file into ANSI color codes, using the current syntax highlighting.
 
@@ -229,7 +229,7 @@ function! s:tgoto(code, color)
       endif
       if seekto != '%;'
         " Seeks are used inside ifs, don't permit crossing the if end
-        let ifend = stdidx(a:code, '%;', i)
+        let ifend = stridx(a:code, '%;', i)
         if ifend < pos " cap to if end if sought string is further (no final %e before %;)
           let pos = ifend
         endif
