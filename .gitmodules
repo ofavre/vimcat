@@ -1,0 +1,3 @@
+[submodule "upstream/rgb.txt"]
+	path = upstream/rgb.txt
+	url = https://github.com/ctrlcctrlv/rgb.txt

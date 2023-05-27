@@ -7,7 +7,12 @@ clean:
 
 build: runtime/syntax/2ansicolorcodes_colors.vim
 
-runtime/syntax/2ansicolorcodes_colors.vim:
+runtime/rgb.txt:
+	[ ! -f ./runtime/rgb.txt ] && git submodule init && git submodule update && \
+		cp ./upstream/rgb.txt/rgb.txt runtime/ \
+		|| true
+
+runtime/syntax/2ansicolorcodes_colors.vim: make-rgb-index.vim runtime/rgb.txt
 	cd runtime/syntax/ && vim -u NONE -X -S ../../make-rgb-index.vim -E -n >/dev/null
 
 install: build

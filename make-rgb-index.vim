@@ -1,7 +1,7 @@
-" Reads $VIMRUNTIME/rgb.txt and transforms it into a dictionary inside a VimScript
+" Reads rgb.txt and transforms it into a dictionary inside a VimScript
 
 " Open the file to transform
-e $VIMRUNTIME/rgb.txt
+e ../../runtime/rgb.txt
 
 " Set up working environment
 set notitle noicon
