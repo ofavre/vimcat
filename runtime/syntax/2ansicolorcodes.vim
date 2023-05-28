@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer: Olivier Favre <of.olivier.favre@gmail.com>
-" Last Change: 2021 Aug 25
+" Last Change: 2023 May 29
 
 " Transform a file into ANSI color codes, using the current syntax highlighting.
 
@@ -25,8 +25,10 @@ if exists('g:ansicolorcodes_truecolors') && g:ansicolorcodes_truecolors != '0'
     source ~/.gvimrc
   endif
 
-  " Load colorname to RGB translation table
-  runtime syntax/2ansicolorcodes_colors.vim
+  if !exists('v:colornames')
+    " Load colorname to RGB translation table
+    runtime syntax/2ansicolorcodes_colors.vim
+  endif
 
   let s:whatterm = 'gui'
 
@@ -254,19 +256,31 @@ endfun
 function! s:color_is_set(color)
   return a:color != '' && a:color >= 0
 endfun
+function! s:translate_color(color)
+  if s:color_is_set(a:color)
+    let l:color = a:color
+    if l:color[0] !~ '^\v[#0-9]'
+      if exists('v:colornames')
+        let l:color = v:colornames[tolower(l:color)]
+      else
+        let l:color = g:ansicolorcodes_colors[tolower(l:color)]
+      endif
+    endif
+    if l:color[0] == '#'
+      let l:r = ('0x' . l:color[1:2]) + 0
+      let l:g = ('0x' . l:color[3:4]) + 0
+      let l:b = ('0x' . l:color[5:6]) + 0
+      let l:color = l:r . ';' . l:g . ';' . l:b
+    endif
+  endif
+  return l:color
+endfun
 if s:whatterm == 'gui'
   function! s:term_fg_color(color)
     if !s:color_is_set(a:color)
       return ''
     else
-      if a:color[0] == '#'
-        let r = ('0x' . a:color[1:2]) + 0
-        let g = ('0x' . a:color[3:4]) + 0
-        let b = ('0x' . a:color[5:6]) + 0
-        return s:term_color(s:fg_code, r . ';' . g . ';' . b)
-      else
-        return s:term_color(s:fg_code, g:ansicolorcodes_colors[tolower(a:color)])
-      endif
+      return s:term_color(s:fg_code, s:translate_color(a:color))
     endif
   endfun
   " See term.c:void term_bg_color(int)
@@ -274,14 +288,7 @@ if s:whatterm == 'gui'
     if !s:color_is_set(a:color)
       return ''
     else
-      if a:color[0] == '#'
-        let r = ('0x' . a:color[1:2]) + 0
-        let g = ('0x' . a:color[3:4]) + 0
-        let b = ('0x' . a:color[5:6]) + 0
-        return s:term_color(s:bg_code, r . ';' . g . ';' . b)
-      else
-        return s:term_color(s:bg_code, g:ansicolorcodes_colors[tolower(a:color)])
-      endif
+      return s:term_color(s:bg_code, s:translate_color(a:color))
     endif
   endfun
 else
