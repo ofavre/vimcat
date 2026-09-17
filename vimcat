@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 # Default values
@@ -21,23 +21,20 @@ default_foldmarker=""
 # Load configuration files
 #
 
-if [ -r /etc/vimcat.conf ]; then
-  . /etc/vimcat.conf
-fi
-if [ -d /etc/vimcat.conf.d/ ]; then
-  OLDIFS="$IFS"
-  IFS=
-  for f in `find /etc/vimcat.conf.d/ -type f | sort`; do
-    . "$f"
-  done
-  IFS="$OLDIFS"
-fi
-if [ -r ~/.vimcatrc ]; then
-  . ~/.vimcatrc
-fi
-if [ -r ./.vimcatrc ]; then
-  . ./.vimcatrc
-fi
+config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+for config_file in \
+  "$config_home/vim/vimcatrc" \
+  "$config_home/vim/vimcat.conf" \
+  "$config_home/vimcat/vimcatrc" \
+  "$config_home/vimcat/vimcat.conf" \
+  "$HOME/.vimcatrc" \
+  "./.vimcatrc"; do
+  if [ -r "$config_file" ]; then
+    . "$config_file"
+  fi
+done
+
 
 
 
@@ -150,8 +147,10 @@ Remarks:
 
 You can modify the default values through use of configuration files.
 The files, if they exist, are read in the following order:
-  /etc/vimcat.conf
-  /etc/vimcat.conf.d/*
+  ${XDG_CONFIG_HOME:-~/.config}/vim/vimcatrc
+  ${XDG_CONFIG_HOME:-~/.config}/vim/vimcat.conf
+  ${XDG_CONFIG_HOME:-~/.config}/vimcat/vimcatrc
+  ${XDG_CONFIG_HOME:-~/.config}/vimcat/vimcat.conf
   ~/.vimcatrc
   ./.vimcatrc
 EOF
@@ -331,11 +330,37 @@ process_file() {
   # * --: Cleanly separate the arguments from the files to be processed.
   #       We can't make any assumption on the file names. They can even start
   #       with a dash, in which case they must not be mistaken for arguments.
-  # * >/dev/null:
-  #       Along with the Ex mode, this prevents the screen from being cleared
-  #       and restored a short while after. None of Vim usage will be visible
-  #       to the user, which is good.
-  vim -X -S /usr/share/vimcat/thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOansicolorcodes" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
+  # Locate thisvimrc dynamically by resolving symlinks
+  local source="${BASH_SOURCE[0]}"
+  while [ -h "$source" ]; do
+    local target="$(readlink "$source")"
+    if [[ "$target" == /* ]]; then
+      source="$target"
+    else
+      source="$(dirname "$source")/$target"
+    fi
+  done
+  local script_dir="$(cd -P "$(dirname "$source")" && pwd)"
+  local thisvimrc=""
+  for candidate in \
+    "$script_dir/thisvimrc" \
+    "$script_dir/../share/vimcat/thisvimrc" \
+    "${XDG_CONFIG_HOME:-$HOME/.config}/vim/thisvimrc" \
+    "$HOME/.vim/plugged/vimcat/thisvimrc" \
+    "$HOME/.config/nvim/plugged/vimcat/thisvimrc" \
+    "/usr/share/vimcat/thisvimrc"; do
+    if [ -r "$candidate" ]; then
+      thisvimrc="$candidate"
+      break
+    fi
+  done
+
+  if [ -z "$thisvimrc" ]; then
+    echo "Error: Could not locate thisvimrc script!" >&2
+    return 1
+  fi
+
+  vim -X -S "$thisvimrc" -E -n "${opt_number_lines[@]}" "${opt_colors[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOansicolorcodes" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
 
   cat "$tmpfile"
 }

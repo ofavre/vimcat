@@ -1,7 +1,7 @@
 let root = expand('<sfile>:h')
-execute 'set runtimepath^=' . fnameescape(root . '/runtime')
+execute 'set runtimepath^=' . fnameescape(root)
 " Manually load our plugin(s)
-execute 'source ' . root . '/runtime/plugin/*.vim'
+execute 'source ' . root . '/plugin/*.vim'
 " Under debian, /etc/vim/vimrc sources debian.vim, which resets the runtimepath
 " option, preventing Vim from autoloading the plugins
 

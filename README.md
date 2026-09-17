@@ -4,38 +4,91 @@ A supercat with Vim powers!
 
 ![Screenshot of a side by side comparison of vimcat on the left and cat on the right](screenshot.png)
 
-## Installing
+## Installation
 
-Simply issue the following:
+`vimcat` is a standard Vim plugin. Installing it via your favorite plugin manager automatically installs and symlinks the `vimcat` CLI executable into your `$PATH`.
 
+### 1. Add to Plugin Manager
+
+* **vim-plug**
+  ```vim
+  Plug 'ofavre/vimcat'
+  ```
+
+* **lazy.nvim**
+  ```lua
+  { 'ofavre/vimcat' }
+  ```
+
+* **packer.nvim**
+  ```lua
+  use 'ofavre/vimcat'
+  ```
+
+* **Standard Vim 8+ Packages**
+  ```bash
+  mkdir -p ~/.vim/pack/plugins/start
+  git clone https://github.com/ofavre/vimcat.git ~/.vim/pack/plugins/start/vimcat
+  ```
+
+### 2. Automatic CLI Executable Linking
+
+The plugin automatically detects if `vimcat` is available in your shell `$PATH`. On first launch of Vim or Neovim, `vimcat` automatically symlinks the CLI executable into the first available directory in your `$PATH` (checking `~/.local/bin`, `~/bin`, `~/.bin`).
+
+* **Manual trigger**: You can re-trigger linking at any time inside Vim via `:VimcatInstall`.
+* **Disable auto-linking**: Set `let g:vimcat_auto_install = 0` in your `.vimrc` / `init.vim` if you prefer to create the symlink manually.
+
+---
+
+## Usage
+
+### From the Command Line (CLI)
+
+```bash
+# Print a file with Vim syntax highlighting
+vimcat main.c
+
+# Print with line numbers
+vimcat -n main.c
+
+# Force 256 colors or truecolor
+vimcat --colors=256 main.c
+vimcat --colors=true main.c
+
+# For more options:
+vimcat --help
 ```
-sudo make install
+
+### Inside Vim / Neovim
+
+You can also use `:TOansicolorcodes` directly inside Vim to convert the current buffer or selection into ANSI escape sequences:
+
+```vim
+:TOansicolorcodes
+:10,30TOansicolorcodes
 ```
 
-To uninstall, issue the following:
+---
 
-```
-sudo make uninstall
-```
+## Configuration
 
-Alternatively you can use the Debian packages published in the [releases section](https://github.com/ofavre/vimcat/releases).
+`vimcat` will automatically load configuration files if present, checking in the following order:
+
+1. `${XDG_CONFIG_HOME:-~/.config}/vim/vimcatrc` (or `.conf`)
+2. `${XDG_CONFIG_HOME:-~/.config}/vimcat/vimcatrc` (or `.conf`)
+3. `~/.vimcatrc`
+4. `./.vimcatrc`
+
+---
 
 ## How does it work?
 
-Uses a headless Vim and runs a convertion VimScript to translate the syntax highlighting into ANSI color codes, and print the file to the console to get colorized output.
-This software consists solely of VimScript and bash.
+`vimcat` launches headless Vim in Ex mode and runs a conversion VimScript to translate syntax highlighting into ANSI color escape codes, printing colorized output to standard output (`stdout`).
 
-The translation program is a Vim Script inspired by the `2html` plugin (see `:help :TOhtml`).
-
-## Options
-
-This program has many options, but you would normally use a few, if any. Use `--help` for more information.
-A few options permits you to issue arbitrary Vim commands.
+The translation VimScript is inspired by Vim's built-in `:TOhtml` plugin (`:help :TOhtml`).
 
 ## Performance
 
-Inspecting the syntax highlighting with `synID()` does not offer very good performance.
-Moreover the script needs to iterates over each and every character of the file, to finds any change in coloring, and produces the corresponding color codes if any change is detected.
-In 256 color modes, the parameterized strings used to output the correct color escape codes are a bit time consuming too.
+Inspecting syntax highlighting with `synID()` requires iterating over characters to detect color changes.
 
-On a Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, capped at that frequency, highlighting a simple C file takes 1.73 second per 1,000 lines, or 578 lines/s.
+On an Intel Core i7-8750H CPU @ 2.20GHz capped at base frequency, highlighting a standard C file processes approximately 578 lines/sec (1.73s per 1,000 lines).
