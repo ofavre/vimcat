@@ -287,10 +287,15 @@ done
 
 process_file() {
   if [ "$1" == "-" ]; then
-    init_tempfile
-    cat - > "$tmpfile"
-    process_file "$tmpfile"
-    return "$?"
+    # The input must not be the file Vim writes its output to ($tmpfile):
+    # reading and writing the same path yields the unconverted content.
+    local stdin_tmpfile ret
+    stdin_tmpfile="$(mktemp "${TMPDIR:-/tmp}/vimcat-stdin.XXXXXXXXXX")"
+    cat - > "$stdin_tmpfile"
+    process_file "$stdin_tmpfile"
+    ret="$?"
+    rm -f "$stdin_tmpfile"
+    return "$ret"
   fi
 
   if ! [ -r "$1" ]; then
@@ -335,7 +340,16 @@ process_file() {
   #       Along with the Ex mode, this prevents the screen from being cleared
   #       and restored a short while after. None of Vim usage will be visible
   #       to the user, which is good.
-  vim -X -S /usr/share/vimcat/thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOansicolorcodes" -c "w! $tmpfile" -c "qa!" -- "$1" >/dev/null
+  # * </dev/tty:
+  #       Without a terminal on its stdin (e.g. when we are fed by a pipe),
+  #       Vim starts with no termcap (no t_Co, t_AF...), and does not set
+  #       'nocompatible': our plugin is not loaded and no colors are output.
+  #       Give it the controlling terminal, if any.
+  local vim_stdin=/dev/stdin
+  if ! [ -t 0 ] && { : </dev/tty; } 2>/dev/null; then
+    vim_stdin=/dev/tty
+  fi
+  vim -X -S /usr/share/vimcat/thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOansicolorcodes" -c "w! $tmpfile" -c "qa!" -- "$1" <"$vim_stdin" >/dev/null
 
   cat "$tmpfile"
 }
