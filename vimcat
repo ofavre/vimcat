@@ -7,6 +7,7 @@
 default_number_lines=""
 default_colors=""
 auto_colors="$(tput colors)"
+default_filetype=""
 default_foldmethod=""
 default_foldlevel=""
 default_foldminlines=""
@@ -101,6 +102,9 @@ Options:
   --cmd-reset
     Discard all previous commands.
     Also affects \`--set' options.
+  --ft={value}, --filetype={value}
+    Set Vim's \`filetype' option, which selects the syntax highlighting.
+    An empty value skips setting the option, "reset" enforces Vim's default value.
   --fdm={value}, --foldmethod={value}
     Set Vim's \`foldmethod' option.
     An empty value skips setting the option, "reset" enforces Vim's default value.
@@ -134,6 +138,7 @@ Default values:
   line numbering: "$default_number_lines"
   colors:         "$default_colors"
                   Note, "auto" would resolve to "$auto_colors".
+  filetype:       "$default_filetype"
   foldmethod:     "$default_foldmethod"
   foldlevel:      "$default_foldlevel"
   foldminlines:   "$default_foldminlines"
@@ -249,7 +254,7 @@ prepare_opt_cmd() {
   fi
 }
 
-vim_options=(foldmethod foldlevel foldminlines tabstop shiftwidth softtabstop foldmarker)
+vim_options=(filetype foldmethod foldlevel foldminlines tabstop shiftwidth softtabstop foldmarker)
 
 set_opt_vim_options() {
   local cmd=""
@@ -407,6 +412,9 @@ while [ "$#" -gt 0 ]; do
         ;;
       --cmd-reset)
         set_opt_cmd_reset
+        ;;
+      --ft=*|--filetype=*)
+        set_opt_filetype "${1#*=}"
         ;;
       --fdm=*|--foldmethod=*)
         set_opt_foldmethod "${1#*=}"
