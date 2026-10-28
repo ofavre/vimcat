@@ -249,10 +249,12 @@ prepare_opt_cmd() {
   fi
 }
 
-set_opt_folding() {
+vim_options=(foldmethod foldlevel foldminlines tabstop shiftwidth softtabstop foldmarker)
+
+set_opt_vim_options() {
   local cmd=""
 
-  for var in foldmethod foldlevel foldminlines tabstop shiftwidth softtabstop foldmarker; do
+  for var in "${vim_options[@]}"; do
     local opt_opt="opt_$var"
     local default_opt="default_$var"
     if [ -n "${!opt_opt}" ]; then
@@ -271,15 +273,15 @@ set_opt_folding() {
     fi
   done
 
-  opt_folding=()
-  [ -n "$cmd" ] && opt_folding=("-c" "set$cmd")
+  opt_vim_options=()
+  [ -n "$cmd" ] && opt_vim_options=("-c" "set$cmd")
 }
 
-for var in foldmethod foldlevel foldminlines tabstop shiftwidth softtabstop foldmarker; do
+for var in "${vim_options[@]}"; do
   eval "
 set_opt_$var() {
   opt_$var=\"\$1\"
-  set_opt_folding
+  set_opt_vim_options
 }
 set_opt_$var \"\$default_$var\"
 "
@@ -349,7 +351,7 @@ process_file() {
   if ! [ -t 0 ] && { : </dev/tty; } 2>/dev/null; then
     vim_stdin=/dev/tty
   fi
-  vim -X -S /usr/share/vimcat/thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors[@]}" "${opt_folding[@]}" "${opt_cmd[@]}" -c "TOansicolorcodes" -c "w! $tmpfile" -c "qa!" -- "$1" <"$vim_stdin" >/dev/null
+  vim -X -S /usr/share/vimcat/thisvimrc -E -n "${opt_number_lines[@]}" "${opt_colors[@]}" "${opt_vim_options[@]}" "${opt_cmd[@]}" -c "TOansicolorcodes" -c "w! $tmpfile" -c "qa!" -- "$1" <"$vim_stdin" >/dev/null
 
   cat "$tmpfile"
 }
